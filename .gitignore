@@ -1,0 +1,15 @@
+# --- IGNORE SECRETS ---
+.env
+.env.local
+.env.production
+.env.development
+
+# --- IGNORE HEAVY FILES ---
+node_modules/
+package-lock.json
+yarn.lock
+
+# --- IGNORE UPLOADS ---
+server/secure_uploads/
+client/.next/
+.DS_Store

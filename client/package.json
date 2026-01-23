@@ -1,0 +1,33 @@
+{
+  "name": "school-sys",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@emailjs/browser": "^4.4.1",
+    "axios": "^1.13.2",
+    "country-state-city": "^3.2.1",
+    "lucide-react": "^0.562.0",
+    "next": "^16.1.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-helmet-async": "^2.0.5",
+    "react-player": "^3.4.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0"
+  }
+}

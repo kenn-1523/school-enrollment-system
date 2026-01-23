@@ -1,0 +1,730 @@
+/* =========================================
+   1. IMPORTS & RESET
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
+/* --- THE FIX: Force Window Scrolling --- */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    /* These two lines break the "Scroll Trap" */
+    height: auto !important; 
+    overflow-y: visible !important; 
+    overflow-x: hidden; /* Keeps horizontal scroll hidden */
+}
+
+/* Ensure your main container doesn't trap the scroll either */
+.landing-container {
+    height: auto !important;
+    overflow: visible !important;
+}
+:root {
+    --bg-main: #0f172a;       
+    --bg-soft: #1e293b;       
+    --bg-input: #0f172a;
+    --text-main: #f8fafc;     
+    --text-sub: #94a3b8;      
+    --primary: #fbbf24;       
+    --primary-hover: #d97706; 
+    --border: #334155;        
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --card-bg: #1e293b;
+}
+/* =========================================
+   LIGHT MODE OVERRIDES (Fixed Colors)
+   ========================================= */
+[data-theme='light'] {
+    --bg-main: #ffffff;       
+    --bg-soft: #f8fafc;       
+    --bg-input: #ffffff;      
+    --text-main: #0f172a;     
+    
+    /* FIX 1: Make secondary text (like Hours/Price) DARKER so it is visible */
+    --text-sub: #475569;      /* Dark Slate Gray (Visible on White) */
+    
+    /* FIX 2: Restore original Yellow Gold (No more Orange) */
+    --primary: #fbbf24;       
+    --primary-hover: #f59e0b; /* Slightly darker gold for hover */
+    
+    --border: #cbd5e1;        
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --card-bg: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+a { text-decoration: none; color: inherit; transition: color 0.3s; }
+ul { list-style: none; }
+img { max-width: 100%; display: block; }
+
+h1, h2, h3, h4, .brand-title, .section-header h3, .contact-header {
+    font-family: 'Playfair Display', serif;
+    color: var(--text-main) !important; /* Forces headers to turn Navy in Light Mode */
+}
+/* =========================================
+   2. NAVBAR (FIXED ALIGNMENT & SCROLL)
+   ========================================= */
+/* =========================================
+   2. NAVBAR (FINAL FIXED VERSION)
+   ========================================= */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Keeps Logo on the left */
+    padding: 0 5%;
+    z-index: 1000;
+    background: transparent; /* Start Transparent */
+    transition: background 0.3s ease, padding 0.3s ease;
+    border-bottom: 1px solid transparent;
+}
+
+/* THE FIX: !important forces the color to apply when 'scrolled' class is added */
+.navbar.scrolled {
+    background: #0f172a !important; /* Fixed Navy Background */
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #fbbf24; 
+}
+
+.logo-container {
+    flex-shrink: 0;
+}
+
+.logo-link { display: flex; align-items: center; gap: 12px; color: white; }
+.logo-image { height: 40px; width: auto; object-fit: contain; }
+.brand-title { font-weight: 700; font-size: 1.2rem; color: #fff; line-height: 1; text-transform: uppercase; }
+.brand-subtitle { font-family: 'Inter', sans-serif; font-size: 0.65rem; color: #fbbf24; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; display: block; }
+
+/* Desktop Navigation */
+.nav-links {
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+    /* ALIGNMENT FIX: Pushes links & buttons to the far right */
+    margin-left: auto; 
+    margin-right: 2rem; 
+}
+
+.nav-links a { font-weight: 500; color: #cbd5e1; font-size: 0.95rem; text-decoration: none; }
+.nav-links a:hover, .nav-links a.active { color: #fbbf24; }
+
+/* Buttons & Actions */
+.nav-actions-container { display: flex; align-items: center; gap: 1rem; }
+.desktop-only-action { display: block; }
+/* Theme Toggle Button (Clean, No Border) */
+.theme-toggle-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #cbd5e1; /* Soft gray-white matches nav links */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    color: #fbbf24; /* Gold on hover */
+    transform: rotate(15deg); /* Subtle playful rotation */
+}
+.btn-primary-nav {
+    background: #fbbf24;
+    color: #0f172a;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: transform 0.2s, background-color 0.2s;
+}
+.btn-primary-nav:hover { background: #f59e0b; transform: translateY(-1px); }
+
+/* Mobile Controls */
+.mobile-only-control { display: none; }
+.mobile-menu-btn { background: none; border: none; cursor: pointer; color: white; display: none; }
+.mobile-enroll-btn { display: none; }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .nav-links {
+        position: fixed; top: 80px; left: 0; width: 100%;
+        background: #0f172a; flex-direction: column; align-items: center;
+        padding: 2rem; gap: 1.5rem; border-bottom: 1px solid #334155;
+        transform: translateY(-150%); transition: transform 0.3s ease; z-index: 999;
+        margin-left: 0; margin-right: 0; 
+    }
+    .nav-links.open { transform: translateY(0); }
+    .desktop-only-action { display: none; }
+    .mobile-only-control { display: block; }
+    .mobile-menu-btn { display: block; }
+    .mobile-enroll-btn { 
+        display: block; background: #fbbf24; color: #0f172a !important; 
+        padding: 12px 24px; border-radius: 8px; font-weight: bold; text-align: center; margin-top: 10px;
+    }
+}
+/* =========================================
+   3. HERO & HEADER BACKGROUNDS
+   ========================================= */
+.hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover; background-position: center; background-attachment: fixed;
+    padding: 90px 5% 4rem; 
+    text-align: center; color: white; position: relative;
+    width: 100%; display: flex; flex-direction: column; justify-content: center;
+}
+
+.courses-header {
+    background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.9)), url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073&auto=format&fit=crop');
+    background-size: cover; background-position: center; padding: 110px 5% 4rem; text-align: center; color: white;
+}
+
+.about-header {
+    background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.85)), url('https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=1740&auto=format&fit=crop'); 
+    background-size: cover; background-position: center; padding: 110px 5% 4rem; text-align: center; color: white;
+}
+
+.hero-label {
+    display: inline-flex; align-items: center; gap: 10px; justify-content: center;
+    color: var(--primary); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 1rem;
+}
+.hero-label .line { width: 40px; height: 2px; background: var(--primary); }
+
+.hero h1, .about-header h1, .courses-header h1 { font-size: 4rem; margin-bottom: 1.5rem; line-height: 1.1; }
+.hero h1 span, .about-header span, .courses-header span { color: var(--primary); font-style: italic; }
+.hero p, .about-header p, .courses-header p { font-size: 1.2rem; color: #cbd5e1; max-width: 700px; margin: 0 auto 3rem; }
+
+.hero-buttons { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 4rem; }
+.btn-gold { background: var(--primary); color: #0f172a; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 700; border: none; cursor: pointer; font-size: 1rem; }
+.btn-gold:hover { transform: translateY(-3px); background: #d97706; }
+.btn-transparent { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+.btn-transparent:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+.hero-footer {
+    display: flex; justify-content: center; gap: 3rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 2rem;
+    max-width: 1000px; margin: 0 auto; flex-wrap: wrap;
+}
+.hero-feature { color: var(--primary); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+
+/* =========================================
+   4. CARDS & GRID LAYOUTS (COMPACT OVERLAP VERSION)
+   ========================================= */
+/* =========================================
+   4. CARDS & GRID LAYOUTS (RESPONSIVE FIX)
+   ========================================= */
+
+.section-header { text-align: center; margin: 4rem 0 3rem; padding: 0 5%; }
+.section-header h3 { font-size: 2.5rem; color: var(--text-main); margin-bottom: 1rem; }
+
+.casino-grid-section { 
+    padding: 0 5% 5rem 5%; 
+    background: transparent; 
+    margin-top: -3rem; 
+    position: relative; 
+    z-index: 20; 
+}
+
+.courses-section {
+    padding: 0 5% 5rem 5%; 
+    background: transparent;
+}
+
+/* --- UNIVERSAL GRID FIX --- */
+/* Applies to Features, Courses, Testimonials, and Values */
+.casino-grid, 
+.feature-grid, 
+.testimonial-grid, 
+.values-grid-section,
+.contact-grid {
+    display: grid;
+    /* FIX 1: Use 'auto-fit' so cards stretch to fill the space instead of leaving gaps */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+    
+    /* FIX 2: Center the grid so it doesn't stick to the left on huge screens */
+    justify-content: center;
+    
+    gap: 2rem;
+    width: 100%;
+    
+    /* FIX 3: Increased max-width to look better on wide screens */
+    max-width: 1440px; 
+    margin: 0 auto;
+}
+
+.feature-card, .testimonial-card, .value-card {
+    background: var(--bg-soft); 
+    border: 1px solid var(--border); 
+    padding: 2.5rem 2rem; 
+    border-radius: 16px;
+    transition: all 0.3s ease; 
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    height: 100%; 
+}
+
+.feature-card:hover, .testimonial-card:hover, .value-card:hover { 
+    transform: translateY(-8px); 
+    border-color: var(--primary); 
+}
+
+/* --- PLAYING CARD STYLE --- */
+.casino-card {
+    background-color: var(--card-bg);
+    border-radius: 16px; 
+    min-height: 450px; 
+    padding: 3rem 1.5rem 4rem 1.5rem; 
+    border: 1px solid var(--border);
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    height: 100%;
+}
+
+.casino-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 30px 50px -15px rgba(0, 0, 0, 0.6);
+}
+
+/* --- DECORATIVE CORNERS (Scaled Down) --- */
+.card-rank-tl, .card-rank-br {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    font-family: 'Times New Roman', serif;
+    color: var(--primary); 
+    font-weight: bold;
+    font-size: 1.1rem; /* Slightly smaller text */
+    pointer-events: none;
+}
+
+.card-rank-tl { top: 12px; left: 12px; }
+.card-rank-br { bottom: 12px; right: 12px; transform: rotate(180deg); }
+
+.suit-icon { font-size: 1.2rem; margin-top: 2px; }
+
+/* --- CARD CONTENT --- */
+.card-top { display: flex; justify-content: center; margin-bottom: 0.8rem; }
+.card-icon { color: var(--text-main); width: 40px; height: 40px; opacity: 0.8; }
+
+.casino-card h2 {
+    font-size: 1.5rem; /* Reduced title size */
+    color: var(--text-main);
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 0.8rem;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 700;
+}
+
+.casino-card p {
+    color: var(--text-sub);
+    font-size: 0.95rem; /* Reduced font size */
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    flex-grow: 1; 
+}
+
+/* --- BUTTON STYLING --- */
+.card-btn {
+    width: 100%;
+    padding: 0.8rem; /* Tighter button */
+    background: #fbbf24; 
+    color: #0f172a; 
+    font-weight: 800;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-size: 0.95rem;
+    margin-top: auto; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-btn:hover { 
+    background: #f59e0b; 
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(251, 191, 36, 0.4);
+}
+
+/* --- ICON BOXES --- */
+.icon-box, .value-icon-box {
+    width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;
+}
+.blue { background: #3b82f6; color: white; }
+.green { background: #22c55e; color: white; }
+.purple { background: #a855f7; color: white; }
+.value-icon-box { color: var(--primary); background: rgba(251, 191, 36, 0.1); }
+
+.feature-card h4, .value-card h3 { 
+    color: var(--text-main);
+    font-size: 1.25rem; 
+    margin-bottom: 1rem; 
+    font-family: 'Playfair Display', serif; 
+}
+.feature-card p, .value-card p { color: var(--text-sub); font-size: 0.95rem; }
+
+/* FIX: Hours & Price Visibility */
+.course-meta { 
+    border-top: 1px solid var(--border); 
+    margin-top: 1.5rem; 
+    padding-top: 1rem; 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 0.9rem; 
+    font-weight: 600;
+    color: var(--text-sub); /* Ensures visibility in Light Mode */
+}
+
+.course-badge { background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; position: absolute; top: 20px; right: 20px; }
+.btn-link { color: var(--primary); font-weight: 600; margin-top: 1rem; display: inline-block; }
+
+.stars { color: var(--primary); margin-bottom: 1rem; }
+.testimonial-card blockquote { 
+    font-style: italic; 
+    color: var(--text-main);
+    font-size: 1.1rem; 
+    margin-bottom: 1.5rem; 
+}
+.student-profile { display: flex; align-items: center; gap: 1rem; }
+.student-avatar { width: 40px; height: 40px; background: white; color: var(--bg-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.student-profile strong { 
+    display: block; 
+    color: var(--text-main);
+}
+
+/* --- ENROLL PAGE --- */
+.enroll-page-wrapper {
+    min-height: 100vh;
+    width: 100%;
+    background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(2, 6, 23, 0.95)), 
+                url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px; 
+}
+
+.enroll-container { margin-top: 120px; padding: 0 5% 5rem; max-width: 900px; margin-left: auto; margin-right: auto; }
+.enroll-card { background: var(--bg-soft); border: 1px solid var(--border); border-top: 5px solid var(--primary); padding: 2.5rem; border-radius: 16px; }
+
+.wizard-header p { color: var(--primary); font-weight: 600; }
+.progress-pill { background: #334155; height: 6px; flex: 1; border-radius: 10px; }
+.progress-pill.active { background: var(--primary); }
+.progress-pill.completed { background: var(--primary); opacity: 0.5; }
+.progress-pill-container { display: flex; gap: 10px; margin-bottom: 2rem; }
+
+/* FIX: Use variable so labels are visible in Light Mode */
+.modern-input-group label { 
+    color: var(--text-sub); 
+    font-weight: 600; 
+    font-size: 0.85rem; 
+    margin-bottom: 0.5rem; 
+    display: block; 
+}
+
+/* FIX: Use variable so input text is visible */
+.modern-input, .modern-select { 
+    width: 100%; 
+    padding: 0.9rem; 
+    background: var(--bg-input); 
+    border: 1px solid var(--border); 
+    color: var(--text-main); /* Changed from 'white' to variable */
+    border-radius: 8px; 
+    font-size: 1rem; 
+    outline: none; 
+}
+
+.modern-input:focus, .modern-select:focus { border-color: var(--primary); }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+@media(max-width: 600px) { .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; } }
+
+/* FIX: Use variable for headers */
+.section-header-modern { 
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border); 
+    padding-bottom: 0.5rem; 
+    margin-bottom: 1.5rem; 
+    font-size: 1.25rem; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+}
+
+.upload-zone { background: rgba(255,255,255,0.05) !important; border-color: var(--border) !important; }
+.btn-primary { background: var(--primary); color: #0f172a; width: 100%; padding: 1rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 1rem; }
+.btn-primary:hover { background: #d97706; }
+.btn-ghost { background: transparent; color: var(--text-sub); border: 1px solid var(--border); padding: 1rem 2rem; border-radius: 8px; cursor: pointer; }
+/* =========================================
+   6. FOOTER & CTA
+   ========================================= */
+.cta-section { padding: 6rem 5%; text-align: center; background: var(--bg-soft); border-top: 1px solid var(--border); }
+.cta-content h2 { font-size: 3rem; color: white; margin-bottom: 1rem; }
+.btn-white { background: var(--primary); color: #000; padding: 1rem 3rem; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; font-size: 1.1rem; }
+
+.footer { background: #0b1120; padding: 5rem 5% 2rem; border-top: 4px solid var(--primary); }
+.footer-content { display: flex; flex-wrap: wrap; gap: 3rem; justify-content: space-between; }
+.footer h3 { color: white; margin-bottom: 0.5rem; font-size: 1.5rem; }
+.footer p { color: var(--primary); font-size: 0.9rem; }
+.footer address { color: #94a3b8; font-style: normal; line-height: 1.6; }
+.copyright-row { border-top: 1px solid #1e293b; margin-top: 3rem; padding-top: 2rem; display: flex; justify-content: space-between; color: #cbd5e1; font-size: 0.85rem; }
+.social-icons a { color: white; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.social-icons a:hover { background: var(--primary); color: black; border-color: var(--primary); }
+
+.legal-links { display: flex; gap: 1rem; }
+.legal-links a { color: #cbd5e1; text-decoration: none; }
+.legal-links a:hover { color: var(--primary); text-decoration: underline; }
+.separator { margin: 0 5px; color: #475569; }
+
+/* =========================================
+   7. MODAL (Courses)
+   ========================================= */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: all 0.3s; }
+.modal-content { background: var(--bg-soft); border: 1px solid var(--border); width: 90%; max-width: 600px; padding: 2rem; border-radius: 12px; color: white; }
+.modal-header { display: flex; justify-content: space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+.modal-course-badge { background: #334155; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+.modal-close-btn { background: none; border: none; color: #cbd5e1; cursor: pointer; }
+.modal-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-price-value { font-size: 1.5rem; font-weight: 800; color: white; }
+
+/* =========================================
+   8. ABOUT PAGE & ANIMATED CARD
+   ========================================= */
+.about-hero-section {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4rem; margin-bottom: 8rem; max-width: 1200px;
+    margin-left: auto; margin-right: auto; position: relative;
+    flex-wrap: wrap; width: 100%;
+}
+
+.about-text-content { flex: 1; min-width: 320px; z-index: 2; }
+.about-subtitle { color: var(--primary); font-size: 2rem; font-style: italic; margin-bottom: 1.5rem; font-family: 'Playfair Display', serif; }
+.about-text p { font-size: 1.1rem; line-height: 1.8; color: var(--text-sub); margin-bottom: 1.5rem; }
+
+.about-visual {
+    flex: 0 0 350px; display: flex; justify-content: center; align-items: center;
+    perspective: 1500px; position: relative; height: 500px; 
+}
+
+.premium-card-back {
+    position: absolute; width: 300px; height: 440px; border-radius: 20px; z-index: 0; background-color: #0f172a;
+    background-image: repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.05) 0px, rgba(251, 191, 36, 0.05) 1px, transparent 1px, transparent 10px), repeating-linear-gradient(-45deg, rgba(251, 191, 36, 0.05) 0px, rgba(251, 191, 36, 0.05) 1px, transparent 1px, transparent 10px);
+    border: 2px solid #334155; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    transform: rotateZ(10deg) translateX(30px) translateY(10px); transition: transform 0.5s ease;
+}
+
+.css-playing-card {
+    width: 300px; height: 440px; background-color: #fff; border-radius: 20px; position: relative; z-index: 1;
+    box-shadow: -10px 10px 30px rgba(0,0,0,0.3); padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;
+    transform: rotateY(-10deg) rotateZ(-3deg); transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.about-visual:hover .premium-card-back { transform: rotateZ(20deg) translateX(80px) translateY(40px); }
+.about-visual:hover .css-playing-card { transform: rotateY(0deg) rotateZ(0deg) scale(1.05); box-shadow: 0 40px 80px rgba(251, 191, 36, 0.2); }
+
+.fancy-inner-border { position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px; border: 2px solid #fbbf24; border-radius: 12px; pointer-events: none; }
+.card-corner { font-family: 'Times New Roman', serif; font-size: 3rem; line-height: 1; color: #0f172a; display: flex; flex-direction: column; align-items: center; font-weight: bold; }
+.card-corner.bottom { transform: rotate(180deg); }
+.card-center { font-size: 8rem; text-align: center; color: #0f172a; line-height: 1; }
+
+/* =========================================
+   9. CONTACT & FAQ (FIXED)
+   ========================================= */
+.contact-header { font-size: 2.5rem; text-align: center; margin-bottom: 3rem; margin-top: 4rem; color: white; clear: both; width: 100%; }
+.contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 1200px; margin: 0 auto 5rem auto; }
+.contact-card { background: var(--bg-soft); padding: 2.5rem 1.5rem; border: 1px solid var(--border); border-radius: 16px; text-align: center; transition: transform 0.3s ease, border-color 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.contact-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+.contact-card i { color: var(--primary); margin-bottom: 1rem; }
+.contact-label { font-size: 0.85rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+.contact-value { 
+    font-weight: 700; 
+    display: block; 
+    color: var(--text-main); /* Changed from white */
+    font-size: 1.1rem; 
+}
+
+/* =========================================
+   9. CONTACT & FAQ (FIXED FOR THEME MODES)
+   ========================================= */
+
+/* FIX: Changed color: white to var(--text-main) to prevent invisible text */
+.contact-header { 
+    font-size: 2.5rem; 
+    text-align: center; 
+    margin-bottom: 3rem; 
+    margin-top: 4rem; 
+    color: var(--text-main); 
+    clear: both; 
+    width: 100%; 
+}
+
+.contact-card { 
+    background: var(--bg-soft); 
+    padding: 2.5rem 1.5rem; 
+    border: 1px solid var(--border); 
+    border-radius: 16px; 
+    text-align: center; 
+    transition: transform 0.3s ease, border-color 0.3s ease; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    gap: 1rem; 
+}
+
+/* FIX: Changed color: white to var(--text-main) */
+.contact-value { 
+    font-weight: 700; 
+    display: block; 
+    color: var(--text-main); 
+    font-size: 1.1rem; 
+}
+
+/* FAQ Styles - INTERACTIVE */
+.faq-section { 
+    max-width: 800px; 
+    margin: 0 auto 6rem auto; 
+}
+
+.faq-item { 
+    border-bottom: 1px solid var(--border); 
+    margin-bottom: 1rem; 
+}
+
+/* UPDATED: FAQ Question Button */
+.faq-question { 
+    width: 100%; 
+    text-align: left; 
+    padding: 1.2rem 0; 
+    background: transparent; 
+    border: none;
+    font-weight: 700; 
+    font-size: 1.2rem; 
+    color: var(--text-main); /* Automatically switches Navy/White */
+    cursor: pointer; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    transition: color 0.3s ease;
+}
+
+/* Added hover state for better interaction */
+.faq-question:hover { 
+    color: var(--primary); /* Gold on hover */
+}
+
+/* Ensure the answer text is also visible */
+.faq-answer { 
+    padding-bottom: 1.5rem; 
+    color: var(--text-sub); /* Gray/Slate text */
+    line-height: 1.7; 
+}
+
+@media (max-width: 900px) {
+    .about-hero-section { flex-direction: column; text-align: center; gap: 3rem; }
+    .about-visual { height: 400px; width: 100%; flex: auto; }
+    .premium-card-back { display: none; }
+    .css-playing-card { width: 260px; height: 360px; transform: rotate(0deg); margin: 0 auto; }
+    .contact-grid { grid-template-columns: 1fr; }
+}
+/* =======================================================
+   THEME PROTECTION: LOCK HERO & NAVBAR TO DARK MODE
+   (Paste this at the very bottom of styles.css)
+   ======================================================= */
+
+/* 1. Navbar Protection (Keeps links light) */
+.navbar .brand-title,
+.navbar .logo-link {
+    color: #ffffff !important; /* Always White */
+}
+
+.navbar .nav-links a,
+.navbar .theme-toggle-btn {
+    color: #cbd5e1 !important; /* Always Light Gray */
+}
+
+/* Hover effect for navbar links (Gold) */
+.navbar .nav-links a:hover,
+.navbar .nav-links a.active,
+.navbar .theme-toggle-btn:hover {
+    color: #fbbf24 !important;
+}
+
+/* 2. Hero & Header Protection */
+/* This specifically overrides the global 'h1' theme rule for these top sections */
+.hero h1, 
+.about-header h1, 
+.courses-header h1,
+.hero p, 
+.about-header p, 
+.courses-header p {
+    color: #ffffff !important; /* Always White */
+}
+
+/* Keep the Gold text Gold */
+.hero h1 span, 
+.about-header h1 span, 
+.courses-header h1 span {
+    color: #fbbf24 !important;
+}
+/* =======================================================
+   3. FOOTER PROTECTION: LOCK TO DARK MODE
+   (Prevents footer text from turning dark in Light Mode)
+   ======================================================= */
+
+/* Force the Main Title to stay White */
+.footer h3,
+.footer h4,
+.footer-title {
+    color: #ffffff !important;
+}
+
+/* Force specific text lines (Address, Copyright, Links) to stay Light Gray */
+.footer address,
+.footer .copyright-row,
+.footer .legal-links a,
+.footer .social-icons a {
+    color: #cbd5e1 !important;
+}
+
+/* Ensure the Gold text stays Gold (and doesn't turn dark orange) */
+.footer p {
+    color: #fbbf24 !important;
+}
+
+/* Fix Hover states for Footer Links */
+.footer .legal-links a:hover,
+.footer .social-icons a:hover {
+    color: #fbbf24 !important;
+    border-color: #fbbf24 !important;
+}

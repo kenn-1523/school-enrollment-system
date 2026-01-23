@@ -1,0 +1,117 @@
+/* --- src/components/CustomAlert.css --- */
+
+.alert-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.alert-modal {
+    width: 90%;
+    max-width: 400px;
+    padding: 30px;
+    border-radius: 24px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Themes */
+.alert-modal.light-theme {
+    background: #ffffff;
+    color: #1e293b;
+}
+
+.alert-modal.dark-theme {
+    background: #1e293b;
+    color: #ffffff;
+    border-color: #334155;
+}
+
+/* Animations */
+@keyframes popIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop-in {
+    animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Content Styling */
+.alert-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.alert-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.5px;
+}
+
+.alert-message {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin: 0 0 30px 0;
+    line-height: 1.5;
+}
+
+/* Buttons */
+.alert-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-action, .btn-ghost {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+    border: none;
+    transition: transform 0.2s, filter 0.2s;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: inherit;
+    opacity: 0.8;
+}
+.btn-ghost:hover { background: rgba(148, 163, 184, 0.1); opacity: 1; }
+
+.btn-danger { background: #ef4444; color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+.btn-success { background: #10b981; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+.btn-warning { background: #f59e0b; color: white; }
+
+.btn-action:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+.close-icon-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+}
+.close-icon-btn:hover { opacity: 1; }

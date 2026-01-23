@@ -1,0 +1,159 @@
+/* src/features/auth/AdminLogin.css */
+
+/* --- GLOBAL RESET (Scoped to this page only) --- */
+.admin-login-wrapper * {
+  box-sizing: border-box;
+}
+
+/* --- MAIN WRAPPER (Background moved here) --- */
+/* FIX: The background is now here, NOT on the 'body' tag */
+.admin-login-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Dark Navy Background */
+  background-color: #020617; 
+  
+  /* The Gradient (Now safe and isolated) */
+  background-image: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, rgba(0, 0, 0, 0) 60%);
+  
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* --- LOGIN CARD --- */
+.admin-login-card {
+  position: relative;
+  z-index: 10;
+  background: #0f172a; /* Card Background */
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  text-align: center;
+}
+
+/* --- HEADER --- */
+.admin-login-header {
+  margin-bottom: 2rem;
+}
+
+/* Updated class to match JSX 'icon-wrapper' */
+.icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem auto;
+}
+
+/* FIX: !important forces title to be White (overriding global theme) */
+.admin-login-header h2 {
+  color: #ffffff !important;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+  font-family: 'Playfair Display', serif;
+}
+
+.admin-login-header p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+  margin-top: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* --- FORMS --- */
+.admin-input-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+  width: 100%;
+}
+
+.admin-input-group label {
+  display: block;
+  color: #fbbf24; /* Gold Labels */
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.admin-input:focus {
+  outline: none;
+  border-color: #fbbf24; /* Gold Focus */
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+}
+
+/* --- BUTTON FIX (Matched to JSX .btn-admin-submit) --- */
+.btn-admin-submit {
+  width: 100%;
+  padding: 1rem;
+  background: #fbbf24; /* Brand Gold */
+  color: #0f172a;      /* Navy Text */
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.btn-admin-submit:hover {
+  background: #f59e0b;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px rgba(251, 191, 36, 0.3);
+}
+
+.btn-admin-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- ERROR MESSAGE --- */
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
