@@ -1,40 +1,61 @@
-import AdminDashboard from '../../features/admin/AdminDashboard';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client'; // <--- Mandatory for Hostinger
 
-export default async function Page() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-  if (!token) {
-    redirect('/login');
-  }
+// ✅ CONNECTION PRESERVED: This links to your existing Dashboard file
+import AdminDashboard from '../../features/admin/AdminDashboard'; 
 
-  // Fetch students data server-side
-  try {
-    const res = await fetch('http://localhost:3001/api/admin/students', {
-      headers: {
-        'Cookie': `token=${token}`,
-      },
-      credentials: 'include',
-    });
+export default function AdminPage() {
+  const router = useRouter();
+  const [students, setStudents] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        redirect('/login');
+  useEffect(() => {
+    const fetchData = async () => {
+      // 1. Get the token from the Browser (instead of the Server)
+      // We check localStorage first, as that is standard for client-side apps
+      const token = localStorage.getItem('token'); 
+      
+      if (!token) {
+        router.push('/login'); // Redirect if no key found
+        return;
       }
-      throw new Error('Failed to fetch students');
-    }
 
-    // ✅ THE FIX: Unwrap the data
-    const responseData = await res.json();
-    
-    // access .data because the API now returns { data: [...], pagination: {...} }
-    const students = responseData.data || []; 
+      try {
+        // 2. Fetch the data from your Backend
+        // Note: Keep 'localhost' for now while testing, but change to your live API link later
+        const res = await fetch('https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api/admin/students', {
+          headers: {
+            // We send the token so the backend allows us in
+            'Authorization': `Bearer ${token}` 
+          }
+        });
 
-    return <AdminDashboard initialStudents={students} />;
-  } catch (error) {
-    console.error('Error fetching students:', error);
-    redirect('/login');
+        if (!res.ok) {
+           if (res.status === 401 || res.status === 403) router.push('/login');
+           throw new Error('Failed to fetch');
+        }
+
+        const responseData = await res.json();
+        
+        // 3. Save the data we found
+        setStudents(responseData.data || []);
+      } catch (error) {
+        console.error("Error loading data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [router]);
+
+  // Loading screen prevents the page from flashing empty
+  if (isLoading) {
+    return <div className="p-10 text-center">Loading Admin System...</div>;
   }
+
+  // ✅ CONNECTION PRESERVED: Passing the data exactly how your component expects it
+  return <AdminDashboard initialStudents={students} />;
 }

@@ -9,7 +9,10 @@ node_modules/
 package-lock.json
 yarn.lock
 
-# --- IGNORE UPLOADS ---
+# --- IGNORE UPLOADS & BUILDS ---
 server/secure_uploads/
 client/.next/
+client/out/
+build/
+dist/
 .DS_Store

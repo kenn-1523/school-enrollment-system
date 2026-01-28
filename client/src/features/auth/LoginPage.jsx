@@ -40,7 +40,7 @@ const LoginPage = () => {
 
     try {
       // 1. Call Backend Login API
-      await axios.post('http://localhost:3001/api/admin/login', {
+      await axios.post('https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api/admin/login', {
         username: formData.username,
         password: formData.password
       }, {

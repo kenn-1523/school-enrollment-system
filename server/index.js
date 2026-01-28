@@ -43,8 +43,8 @@ app.use(cors({
   origin: [
     "http://localhost:3000", 
     "http://localhost:5173", 
-    "https://your-actual-domain.com", // <--- ADD THIS (Replace with your domain)
-    "https://www.your-actual-domain.com"
+    "https://mediumpurple-turtle-960137.hostingersite.com", // <--- ADD THIS (Replace with your domain)
+    "https://www.mediumpurple-turtle-960137.hostingersite.com"
   ],
   credentials: true
 }));

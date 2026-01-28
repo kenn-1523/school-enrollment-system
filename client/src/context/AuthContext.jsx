@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // We ask the backend: "Is the user logged in?"
       // This works even with HttpOnly cookies because the browser sends them automatically.
-      const res = await axios.get('http://localhost:3001/api/me', { 
+      const res = await axios.get('https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api/me', { 
         withCredentials: true 
       });
 
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
   // --- LOGOUT LOGIC ---
   const logout = async () => {
     try {
-      await axios.post('http://localhost:3001/api/logout', {}, { withCredentials: true });
+      await axios.post('https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api/logout', {}, { withCredentials: true });
     } catch (error) {
       console.error("Logout error:", error);
     } finally {

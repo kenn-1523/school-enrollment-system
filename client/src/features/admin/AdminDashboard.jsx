@@ -47,7 +47,7 @@ const SecureImage = ({ filename, alt, className, style }) => {
         let active = true;
         
         // Use Env var if available, else localhost
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mediumpurple-turtle-960137.hostingersite.com/backend_api';
 
         axios.get(`${API_URL}/api/secure-file/${filename}`, { 
             responseType: 'blob', 
@@ -117,7 +117,7 @@ const AdminDashboard = ({ initialStudents = [] }) => {
       onConfirm: () => {}
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mediumpurple-turtle-960137.hostingersite.com/backend_api';
 
   // --- 🔒 SECURITY CHECK ---
   useEffect(() => {

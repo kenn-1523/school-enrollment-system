@@ -14,7 +14,7 @@ const UserSettings = () => {
     if (!auth || !auth.user) return navigate('/login', { replace: true });
     const parsed = auth.user;
     const id = parsed.id || parsed.student_id || parsed.id;
-    axios.get(`http://localhost:3001/api/student/${id}`)
+    axios.get(`https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api/student/${id}`)
       .then(res => {
         setUser(res.data);
         setLoading(false);
@@ -49,7 +49,7 @@ const UserSettings = () => {
       employment_status: user.employment_status
     };
 
-    axios.put(`http://localhost:3001/api/student/${id}`, payload)
+    axios.put(`https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api/student/${id}`, payload)
       .then(res => {
         setSaving(false);
         // Update localStorage minimal user record if present

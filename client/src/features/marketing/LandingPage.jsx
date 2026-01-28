@@ -60,12 +60,6 @@ const LandingPage = () => {
       <nav className="navbar" id="navbar">
         <div className="logo-container">
           <Link href="/" className="logo-link">
-            <img 
-              src="/images/clean-ects.png" 
-              alt="ECTS Logo" 
-              className="logo-image" 
-              onError={(e) => e.target.style.display='none'}
-            />
             <div className="logo-text-wrapper">
                 <span className="brand-title">Elite Croupier</span>
                 <span className="brand-subtitle">Training Services</span>
@@ -109,20 +103,31 @@ const LandingPage = () => {
       </nav>
       {/* --- HERO SECTION --- */}
       <header className="hero">
-        <div className="hero-label">
-            <span className="line"></span> GLOBAL CERTIFICATION
-        </div>
-        <h1>Master the Art of <br /><span>Casino Dealing</span></h1>
-        <p>
-            Welcome to Elite Croupier Training. We offer world-class online training 
-            for aspiring croupiers looking to work abroad in luxury land-based casinos 
-            or international cruise ships.
-        </p>
-        <div className="hero-buttons">
-            <Link href="/courses" className="btn-gold">View Courses</Link>
-            <Link href="/about" className="btn-transparent">
-                <PlayCircle size={18} style={{marginRight: '8px'}} /> About Us
-            </Link>
+        <div className="hero-content">
+          <div className="hero-text">
+            <div className="hero-label">
+                <span className="line"></span> GLOBAL CERTIFICATION
+            </div>
+            <h1>Master the Art of <br /><span>Casino Dealing</span></h1>
+            <p>
+                Welcome to Elite Croupier Training. We offer world-class online training 
+                for aspiring croupiers looking to work abroad in luxury land-based casinos 
+                or international cruise ships.
+            </p>
+            <div className="hero-buttons">
+                <Link href="/courses" className="btn-gold">View Courses</Link>
+                <Link href="/about" className="btn-transparent">
+                    <PlayCircle size={18} style={{marginRight: '8px'}} /> About Us
+                </Link>
+            </div>
+          </div>
+          <div className="hero-image">
+            <img 
+              src="/images/clean-ects.png" 
+              alt="ECTS Logo" 
+              onError={(e) => e.target.style.display='none'}
+            />
+          </div>
         </div>
         <div className="hero-footer">
             <div className="hero-feature"><Globe size={18} style={{marginRight: '8px'}} /> Work Globally</div>
@@ -173,7 +178,7 @@ const LandingPage = () => {
                 </div>
                 <h2>Blackjack Mastery</h2>
                 <p>The essential dealing foundation. Master procedures from shuffling to payouts.</p>
-                <div className="course-meta"><span>12 Hours</span><span>$250 USD</span></div>
+                <div className="course-meta"><span>12 Hours</span><span>$300 USD</span></div>
                 <Link href="/courses" className="card-btn">
                     View Details <ArrowRight width={16} style={{marginLeft: '5px'}} />
                 </Link>
@@ -197,7 +202,7 @@ const LandingPage = () => {
                 <p>All courses included: Blackjack, Poker, Roulette, Craps + Soft Skills.</p>
                 <div className="course-meta">
                     <span style={{color:'#fbbf24'}}>Full Access</span>
-                    <span style={{color:'#fbbf24'}}>$1,200 USD</span>
+                    <span style={{color:'#fbbf24'}}>$1,350 USD</span>
                 </div>
                 <Link href="/enroll" className="card-btn" style={{background:'white', color:'#0f172a'}}>
                     Enroll Now <ArrowRight width={16} style={{marginLeft: '5px'}} />
@@ -213,7 +218,7 @@ const LandingPage = () => {
                 </div>
                 <h2>Craps Specialist</h2>
                 <p>Advanced module. Master stick handling and proposition bets.</p>
-                <div className="course-meta"><span>24 Hours</span><span>$400 USD</span></div>
+                <div className="course-meta"><span>24 Hours</span><span>$500 USD</span></div>
                 <Link href="/courses" className="card-btn">
                     View Details <ArrowRight width={16} style={{marginLeft: '5px'}} />
                 </Link>
