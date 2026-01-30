@@ -1,0 +1,252 @@
+/* =========================================
+   1. IMPORTS & RESET (Required for Fonts)
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+    --bg-main: #0f172a;       
+    --bg-soft: #1e293b;       
+    --bg-input: #0f172a;
+    --text-main: #f8fafc;     
+    --text-sub: #94a3b8;      
+    --primary: #fbbf24;       
+    --primary-hover: #d97706; 
+    --border: #334155;        
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --card-bg: #1e293b;
+}
+
+[data-theme='light'] {
+    --bg-main: #ffffff;       
+    --bg-soft: #f8fafc;       
+    --bg-input: #ffffff;      
+    --text-main: #0f172a;     
+    --text-sub: #475569;      
+    --primary: #fbbf24;       
+    --primary-hover: #f59e0b; 
+    --border: #cbd5e1;        
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --card-bg: #ffffff;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+}
+
+/* =========================================
+   2. NAVBAR (Shared Component)
+   ========================================= */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 80px;
+    display: flex; align-items: center; justify-content: flex-start;
+    padding: 0 5%; z-index: 1000;
+    background: transparent;
+    transition: background 0.3s ease, padding 0.3s ease;
+    border-bottom: 1px solid transparent;
+}
+
+.navbar.scrolled {
+    background: #0f172a !important;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    padding-top: 0.5rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid #fbbf24;
+}
+
+.logo-link { display: flex; align-items: center; gap: 12px; color: white; text-decoration: none; }
+.logo-image { height: 40px; width: auto; object-fit: contain; }
+.brand-title { font-weight: 700; font-size: 1.2rem; color: #fff; line-height: 1; text-transform: uppercase; font-family: 'Playfair Display', serif; }
+.brand-subtitle { font-family: 'Inter', sans-serif; font-size: 0.65rem; color: #fbbf24; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; display: block; }
+
+.nav-links { margin-left: auto; margin-right: 2rem; display: flex; gap: 2.5rem; align-items: center; }
+.nav-links a { font-weight: 500; color: #cbd5e1; font-size: 0.95rem; text-decoration: none; transition: color 0.3s; }
+.nav-links a:hover, .nav-links a.active { color: #fbbf24; }
+
+.nav-actions-container { display: flex; align-items: center; gap: 1rem; }
+
+.theme-toggle-btn {
+    background: transparent; border: none; cursor: pointer; color: #cbd5e1;
+    padding: 8px; transition: color 0.3s ease, transform 0.2s ease;
+}
+.theme-toggle-btn:hover { color: #fbbf24; transform: rotate(15deg); }
+
+.btn-primary-nav {
+    background: #fbbf24; color: #0f172a !important;
+    border: none; padding: 0.6rem 1.5rem; border-radius: 50px;
+    font-weight: 800; cursor: pointer; font-size: 0.95rem;
+    transition: transform 0.2s, background-color 0.2s;
+}
+.btn-primary-nav:hover { background: #f59e0b; transform: translateY(-1px); }
+
+/* Mobile Menu */
+.mobile-only-control { display: none; }
+.mobile-menu-btn { background: none; border: none; cursor: pointer; color: white; display: none; }
+.mobile-enroll-btn { display: none; }
+
+@media (max-width: 768px) {
+    .nav-links {
+        position: fixed; top: 80px; left: 0; width: 100%;
+        background: #0f172a; flex-direction: column; align-items: center;
+        padding: 2rem; gap: 1.5rem; border-bottom: 1px solid #334155;
+        transform: translateY(-150%); transition: transform 0.3s ease; z-index: 999;
+        margin-left: 0; margin-right: 0;
+    }
+    .nav-links.open { transform: translateY(0); }
+    .desktop-only-action { display: none; }
+    .mobile-only-control, .mobile-menu-btn { display: block; }
+    .mobile-enroll-btn { 
+        display: block; background: #fbbf24; color: #0f172a !important; 
+        padding: 12px 24px; border-radius: 8px; font-weight: bold; text-align: center; margin-top: 10px;
+    }
+}
+
+/* =========================================
+   3. ABOUT HEADER
+   ========================================= */
+.about-header {
+    background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.85)), url('https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=1740&auto=format&fit=crop'); 
+    background-size: cover; background-position: center; padding: 110px 5% 4rem; text-align: center; color: white;
+}
+.about-header h1 { font-family: 'Playfair Display', serif; font-size: 4rem; margin-bottom: 1.5rem; line-height: 1.1; color: white !important; }
+.about-header h1 span { color: var(--primary) !important; font-style: italic; }
+.about-header p { font-size: 1.2rem; color: #cbd5e1 !important; max-width: 700px; margin: 0 auto 3rem; }
+
+/* =========================================
+   4. ABOUT HERO & CARD ANIMATION
+   ========================================= */
+.about-container { width: 100%; overflow: hidden; }
+
+.about-hero-section {
+    display: flex; align-items: center; justify-content: center;
+    gap: 4rem; margin-bottom: 8rem; max-width: 1200px;
+    margin-left: auto; margin-right: auto; position: relative;
+    flex-wrap: wrap; width: 100%; padding: 4rem 5%;
+}
+
+.about-text-content { flex: 1; min-width: 320px; z-index: 2; }
+.about-subtitle { color: var(--primary); font-size: 2rem; font-style: italic; margin-bottom: 1.5rem; font-family: 'Playfair Display', serif; }
+.about-text p { font-size: 1.1rem; line-height: 1.8; color: var(--text-sub); margin-bottom: 1.5rem; }
+
+.about-visual {
+    flex: 0 0 350px; display: flex; justify-content: center; align-items: center;
+    perspective: 1500px; position: relative; height: 500px; 
+}
+
+.premium-card-back {
+    position: absolute; width: 300px; height: 440px; border-radius: 20px; z-index: 0; background-color: #0f172a;
+    background-image: repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.05) 0px, rgba(251, 191, 36, 0.05) 1px, transparent 1px, transparent 10px), repeating-linear-gradient(-45deg, rgba(251, 191, 36, 0.05) 0px, rgba(251, 191, 36, 0.05) 1px, transparent 1px, transparent 10px);
+    border: 2px solid #334155; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    transform: rotateZ(10deg) translateX(30px) translateY(10px); transition: transform 0.5s ease;
+}
+
+.css-playing-card {
+    width: 300px; height: 440px; background-color: #fff; border-radius: 20px; position: relative; z-index: 1;
+    box-shadow: -10px 10px 30px rgba(0,0,0,0.3); padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;
+    transform: rotateY(-10deg) rotateZ(-3deg); transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.about-visual:hover .premium-card-back { transform: rotateZ(20deg) translateX(80px) translateY(40px); }
+.about-visual:hover .css-playing-card { transform: rotateY(0deg) rotateZ(0deg) scale(1.05); box-shadow: 0 40px 80px rgba(251, 191, 36, 0.2); }
+
+.fancy-inner-border { position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px; border: 2px solid #fbbf24; border-radius: 12px; pointer-events: none; }
+.card-corner { font-family: 'Times New Roman', serif; font-size: 3rem; line-height: 1; color: #0f172a; display: flex; flex-direction: column; align-items: center; font-weight: bold; }
+.card-corner.bottom { transform: rotate(180deg); }
+.card-center { font-size: 8rem; text-align: center; color: #0f172a; line-height: 1; }
+
+@media (max-width: 900px) {
+    .about-hero-section { flex-direction: column; text-align: center; gap: 3rem; }
+    .about-visual { height: 400px; width: 100%; flex: auto; }
+    .premium-card-back { display: none; }
+    .css-playing-card { width: 260px; height: 360px; transform: rotate(0deg); margin: 0 auto; }
+}
+
+/* =========================================
+   5. PHILOSOPHY GRID (Values)
+   ========================================= */
+.contact-header { 
+    font-size: 2.5rem; text-align: center; margin-bottom: 3rem; margin-top: 4rem; 
+    color: var(--text-main); font-family: 'Playfair Display', serif; 
+}
+
+.values-grid-section {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    justify-content: center; gap: 2rem; width: 100%; max-width: 1440px; margin: 0 auto;
+    padding: 0 5% 5rem 5%;
+}
+
+.value-card {
+    background: var(--card-bg); border: 1px solid var(--border); padding: 2.5rem 2rem;
+    border-radius: 16px; transition: all 0.3s ease; box-shadow: var(--shadow);
+    display: flex; flex-direction: column; height: 100%;
+}
+.value-card:hover { transform: translateY(-8px) scale(1.02); border-color: var(--primary); }
+
+.value-icon-box {
+    width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.5rem; color: var(--primary); background: rgba(251, 191, 36, 0.1);
+}
+.value-card h3 { color: var(--text-main); font-size: 1.25rem; margin-bottom: 1rem; font-family: 'Playfair Display', serif; }
+.value-card p { color: var(--text-sub); font-size: 0.95rem; }
+
+/* =========================================
+   6. CONTACT SECTION
+   ========================================= */
+.contact-grid { 
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; 
+    max-width: 1200px; margin: 0 auto 5rem auto; padding: 0 5%; 
+}
+
+.contact-card {
+    background: var(--bg-soft); padding: 2.5rem 1.5rem; border: 1px solid var(--border);
+    border-radius: 16px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.contact-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+
+.contact-label { font-size: 0.85rem; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+.contact-value { font-weight: 700; display: block; color: var(--text-main); font-size: 1.1rem; }
+
+@media (max-width: 900px) {
+    .contact-grid { grid-template-columns: 1fr; }
+}
+
+/* =========================================
+   7. FAQ SECTION
+   ========================================= */
+.faq-section { max-width: 800px; margin: 0 auto 6rem auto; padding: 0 5%; }
+.faq-item { border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+
+.faq-question {
+    width: 100%; text-align: left; padding: 1.2rem 0; background: transparent; border: none;
+    font-weight: 700; font-size: 1.2rem; color: var(--text-main); cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center; transition: color 0.3s ease;
+}
+.faq-question:hover { color: var(--primary); }
+
+.faq-answer { padding-bottom: 1.5rem; color: var(--text-sub); line-height: 1.7; }
+
+/* =========================================
+   8. FOOTER (Shared Component)
+   ========================================= */
+.footer { background: #0b1120; padding: 5rem 5% 2rem; border-top: 4px solid var(--primary); }
+.footer-content { display: flex; flex-wrap: wrap; gap: 3rem; justify-content: space-between; }
+.footer h3 { color: #ffffff !important; margin-bottom: 0.5rem; font-size: 1.5rem; font-family: 'Playfair Display', serif; }
+.footer p { color: #fbbf24 !important; font-size: 0.9rem; }
+.footer address { color: #cbd5e1 !important; font-style: normal; line-height: 1.6; }
+
+.social-icons { display: flex; gap: 1rem; }
+.social-icons a { 
+    color: #cbd5e1 !important; width: 40px; height: 40px; border: 1px solid rgba(255,255,255,0.1); 
+    display: flex; align-items: center; justify-content: center; border-radius: 50%; 
+}
+.social-icons a:hover { background: var(--primary); color: black !important; border-color: var(--primary); }
+
+.copyright-row { 
+    border-top: 1px solid #1e293b; margin-top: 3rem; padding-top: 2rem; 
+    display: flex; justify-content: space-between; color: #cbd5e1 !important; font-size: 0.85rem; 
+}
+.legal-links { display: flex; gap: 1rem; }
+.legal-links a { color: #cbd5e1 !important; text-decoration: none; }
+.legal-links a:hover { color: var(--primary) !important; text-decoration: underline; }

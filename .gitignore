@@ -1,18 +1,27 @@
-# --- IGNORE SECRETS ---
+# --- IGNORE SECRETS (Critical!) ---
 .env
 .env.local
 .env.production
 .env.development
+.env.test
 
-# --- IGNORE HEAVY FILES ---
+# --- IGNORE HEAVY DEPENDENCIES ---
 node_modules/
-package-lock.json
-yarn.lock
+# DO NOT ignore package-lock.json! We need that.
 
-# --- IGNORE UPLOADS & BUILDS ---
-server/secure_uploads/
-client/.next/
-client/out/
-build/
-dist/
+# --- IGNORE BUILDS (Monorepo Compatible) ---
+# This matches .next folders inside ANY app (apps/client, apps/admin, etc)
+**/.next/
+**/out/
+**/build/
+**/dist/
+**/coverage/
+
+# --- IGNORE UPLOADS ---
+**/secure_uploads/
+**/public/uploads/
+
+# --- SYSTEM FILES ---
 .DS_Store
+Thumbs.db
+.turbo/

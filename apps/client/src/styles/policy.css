@@ -1,0 +1,97 @@
+/* =========================================
+   POLICY & TERMS HERO STYLES
+   ========================================= */
+
+/* The Hero Section (Background Image + Overlay) */
+.policy-hero {
+    position: relative;
+    width: 100%;
+    height: 400px; /* Tall header */
+    background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.9)), 
+                url('https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=2073&auto=format&fit=crop'); /* Poker Table Texture */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    margin-bottom: -100px; /* Pulls the content card UP into the hero */
+    z-index: 1;
+}
+
+.policy-hero h1 {
+    font-size: 3.5rem;
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 0.5rem;
+    color: white !important; /* Always white in hero */
+}
+
+.policy-hero p {
+    color: #cbd5e1 !important; /* Light gray text */
+    font-size: 1.1rem;
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px;
+}
+
+/* The Content Container */
+.policy-container {
+    max-width: 900px;
+    margin: 0 auto 5rem;
+    padding: 0 5%;
+    position: relative;
+    z-index: 10; /* Sits on top of hero */
+}
+
+/* The Glass Card */
+.policy-card {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+    color: var(--text-sub);
+}
+
+/* =========================================
+   LIGHT MODE FIXES (Critical)
+   ========================================= */
+[data-theme='light'] .policy-card {
+    background: #ffffff; /* Solid White Card */
+    border-color: #cbd5e1;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1);
+}
+
+[data-theme='light'] .policy-card h3,
+[data-theme='light'] .policy-card h2 {
+    color: #0f172a !important; /* Dark Navy Headers */
+}
+
+[data-theme='light'] .policy-card p,
+[data-theme='light'] .policy-card li {
+    color: #334155 !important; /* Dark Gray Text */
+}
+
+/* Return Button Styling */
+.btn-policy-return {
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px;
+    color: var(--text-sub);
+    padding: 10px 20px;
+    border-radius: 50px;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+    background: var(--bg-soft);
+}
+
+.btn-policy-return:hover {
+    color: #fbbf24;
+    border-color: #fbbf24;
+    transform: translateX(-5px);
+}
