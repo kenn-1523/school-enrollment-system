@@ -1,50 +1,29 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* --- THE IMPORTANT FIX --- */
-html, body, #root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  
-  /* 1. Force full width (Fixes the white bar on the right) */
-  max-width: 100% !important; 
-  
-  /* 2. Force Left Alignment (Fixes the centered text) */
-  text-align: left !important; 
-  
-  overflow-x: hidden;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-/* Light Mode Support */
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+/* COMPONENT OVERRIDES 
+   (These fix the conflicts between Old Styles and New Tailwind)
+*/
+@layer components {
+  /* 1. FIX INPUTS: Make form boxes look like Casino style */
+  input, select, textarea {
+    @apply w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-3 text-white placeholder-zinc-500 outline-none transition-all duration-200;
   }
-  a:hover {
-    color: #747bff;
+  
+  /* Gold Focus Glow */
+  input:focus, select:focus, textarea:focus {
+    @apply border-yellow-500 ring-1 ring-yellow-500;
+  }
+
+  /* 2. FIX BUTTONS: This solves the "Arrow Below Text" bug.
+     We use !important to override the legacy 'display: block' rule. 
+  */
+  button {
+    display: flex !important;       /* Force side-by-side layout */
+    align-items: center !important; /* Center vertically */
+    justify-content: center !important; /* Center horizontally */
+    flex-direction: row !important; /* Ensure arrow is next to text, not below */
+    gap: 0.5rem; /* Add nice spacing between text and arrow */
   }
 }

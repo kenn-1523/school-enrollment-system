@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { 
   User, BookOpen, FileText, MapPin, 
   CheckCircle, AlertCircle, Briefcase, 
-  CheckSquare, Square, ChevronRight
+  CheckSquare, Square, ChevronRight, Lock // Added Lock Icon
 } from 'lucide-react';
 
 // --- GLOBAL ADDRESS LIBRARY ---
@@ -15,9 +15,9 @@ import { Country, State, City } from 'country-state-city';
 import Navbar from '../../components/layout/Navbar';
 import Footer from '../../components/layout/footer';
 import { useTheme } from '../../context/ThemeContext';
-import { coursesData, PH_REGIONS } from '@repo/business-logic';      // ✅ Single Source of Truth
-import { calculateTuition } from '../../utils/priceCalculator'; // ✅ Logic Layer
-import { submitEnrollment } from '../../services/enrollmentService'; // ✅ Service Layer
+import { coursesData, PH_REGIONS } from '@repo/business-logic';      
+import { calculateTuition } from '../../utils/priceCalculator'; 
+import { submitEnrollment } from '../../services/enrollmentService'; 
 
 import '../../styles/marketing.css';
 
@@ -46,9 +46,13 @@ const EnrollForm = () => {
 
   // --- FORM DATA ---
   const [formData, setFormData] = useState({
+    // NEW FIELDS FOR ACCOUNT SECURITY
+    username: '', 
+    password: '',
+
     email: '', mobile: '',
     entryDate: '', scholarshipType: 'Paying',
-    selectedCourses: [], // Stores CODES (e.g. 'G1', 'G2')
+    selectedCourses: [], 
     lastName: '', firstName: '', middleName: '',
     street: '', city: '', province: '', region: '', country: '', zipCode: '',
     sex: 'Male', civilStatus: 'Single', dob: '', 
@@ -69,7 +73,6 @@ const EnrollForm = () => {
     
     setCountries(Country.getAllCountries());
 
-    // Handle URL Params from Courses Page
     const urlCodes = searchParams.get('code');
     if (urlCodes) {
         const codesArray = urlCodes.split(',');
@@ -81,7 +84,6 @@ const EnrollForm = () => {
   }, [searchParams]);
 
   // --- REAL-TIME CALCULATION ---
-  // This runs on every render to ensure totals are always accurate
   const totals = calculateTuition(formData.selectedCourses);
 
   // --- HELPERS ---
@@ -160,6 +162,11 @@ const EnrollForm = () => {
         if (!formData.firstName || !formData.lastName || !formData.dob) { showAlert('Please fill in Name and Birth Date.'); return false; }
         if (!formData.email || !formData.mobile) { showAlert('Contact details required.'); return false; }
         if (!formData.country || !formData.region || !formData.city) { showAlert('Complete address required.'); return false; }
+        
+        // NEW SECURITY VALIDATION
+        if (!formData.username || !formData.password) { showAlert('Username and Password are required.'); return false; }
+        if (formData.password.length < 8) { showAlert('Password must be at least 8 characters.'); return false; }
+        
         return true;
     }
     if (step === 2) {
@@ -246,19 +253,63 @@ const EnrollForm = () => {
            <div className="modern-input-group"><label>City *</label><input list="city-options" className="modern-input" value={formData.city} onChange={handleCityChange} /><datalist id="city-options">{cities.map((c) => (<option key={`${c.name}-${Math.random()}`} value={c.name} />))}</datalist></div>
            <div className="modern-input-group"><label>Zip Code *</label><input className="modern-input" name="zipCode" value={formData.zipCode} onChange={handleChange} placeholder="Postal Code" /></div>
         </div>
-        <div className="section-block" style={{marginTop:'2rem'}}>
-            <h3 className="section-header-modern"><Briefcase className="text-blue-600"/> 3. Contact</h3>
-            <div className="form-grid-2">
-                <div className="modern-input-group"><label>Email *</label><input className="modern-input" name="email" value={formData.email} onChange={handleChange} /></div>
-                <div className="modern-input-group"><label>Mobile *</label><input className="modern-input" name="mobile" value={formData.mobile} onChange={handleChange} /></div>
-            </div>
+      </div>
+
+      <div className="section-block" style={{marginTop:'2rem'}}>
+          <h3 className="section-header-modern"><Briefcase className="text-blue-600"/> 3. Contact</h3>
+          <div className="form-grid-2">
+              <div className="modern-input-group"><label>Email *</label><input className="modern-input" name="email" value={formData.email} onChange={handleChange} /></div>
+              <div className="modern-input-group"><label>Mobile *</label><input className="modern-input" name="mobile" value={formData.mobile} onChange={handleChange} /></div>
+          </div>
+      </div>
+
+      {/* =========================================
+          4. ACCOUNT SECURITY (Added this Section)
+          ========================================= */}
+      <div className="section-block" style={{marginTop:'2rem', borderTop: '1px dashed #3f3f46', paddingTop: '2rem'}}>
+        <h3 className="section-header-modern" style={{color: '#EAB308'}}>
+          <Lock size={22} className="text-yellow-500" /> 4. Account Security
+        </h3>
+        <p className="text-xs text-zinc-400 mb-4 ml-8">Create your student portal login. You can only log in after Admin approval.</p>
+
+        <div className="form-grid-2">
+          {/* USERNAME */}
+          <div className="modern-input-group">
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              Username <span className="text-red-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              name="username" 
+              required 
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Create a unique username"
+              className="modern-input"
+            />
+          </div>
+
+          {/* PASSWORD */}
+          <div className="modern-input-group">
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+              Password <span className="text-red-500">*</span>
+            </label>
+            <input 
+              type="password" 
+              name="password" 
+              required 
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Min. 8 characters"
+              className="modern-input"
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 
   const renderStep2 = () => {
-    // ✅ Use Data Layer
     const paidCourses = coursesData.filter(c => c.isPaid);
 
     return (
@@ -271,10 +322,8 @@ const EnrollForm = () => {
             <div className="modern-input-group"><label>Payment Type</label><select className="modern-select" name="scholarshipType" value={formData.scholarshipType} onChange={handleChange}><option>Paying (Private)</option><option>Scholarship</option></select></div>
         </div>
 
-        {/* ✅ TWO-COLUMN LAYOUT: Courses (Left) + Real-Time Calculation (Right) */}
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'2rem', marginTop:'2rem', alignItems:'start'}}>
           
-          {/* LEFT: COURSE SELECTION */}
           <div>
             <label style={{marginBottom:'10px', display:'block', color:'#94a3b8', fontWeight:'600', fontSize:'1rem'}}>Select Games to Master *</label>
             <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
@@ -310,7 +359,6 @@ const EnrollForm = () => {
             </div>
           </div>
 
-          {/* RIGHT: REAL-TIME CALCULATION (STICKY) */}
           <div style={{position:'sticky', top:'100px'}}>
             {formData.selectedCourses.length === 0 ? (
               <div style={{background:'rgba(251, 191, 36, 0.08)', border:'2px dashed #fbbf24', borderRadius:'12px', padding:'2rem', textAlign:'center', color:'#94a3b8'}}>
@@ -320,7 +368,6 @@ const EnrollForm = () => {
               <div style={{background:'rgba(251, 191, 36, 0.08)', border:'2px solid #fbbf24', borderRadius:'12px', padding:'1.5rem'}}>
                 <h4 style={{color:'#fbbf24', fontSize:'1.1rem', marginBottom:'15px', fontWeight:'bold', textTransform:'uppercase', letterSpacing:'0.5px', margin:'0 0 15px 0'}}>💰 Price Breakdown</h4>
                 
-                {/* Course List */}
                 <div style={{marginBottom:'15px', paddingBottom:'15px', borderBottom:'1px dashed #fbbf24'}}>
                   {totals.selectedObjects.map(c => (
                     <div key={c.code} style={{display:'flex', justifyContent:'space-between', marginBottom:'8px', color:'var(--text-sub)', fontSize:'0.95rem'}}>
@@ -330,7 +377,6 @@ const EnrollForm = () => {
                   ))}
                 </div>
 
-                {/* Pricing Breakdown */}
                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:'8px', color:'var(--text-sub)', fontSize:'0.95rem'}}>
                   <span>Subtotal</span>
                   <span style={{color:'var(--text-main)', fontWeight:'bold'}}>${totals.subtotal.toLocaleString()}</span>
@@ -353,7 +399,6 @@ const EnrollForm = () => {
         </div>
       </div>
       
-      {/* ✅ RESTORED: Dashed Upload Boxes from Screenshot */}
       <div className="section-block" style={{marginTop:'2rem'}}>
         <h3 className="section-header-modern"><FileText className="text-blue-600"/> Uploads</h3>
         <div className="form-grid-2">
@@ -413,25 +458,24 @@ const EnrollForm = () => {
     <div className="animate-fade-in" style={{textAlign:'center'}}>
       <h2 style={{fontSize:'2rem', marginBottom:'1rem', color:'var(--text-main)'}}>Review & Submit</h2>
       <div style={{background:'var(--bg-soft)', padding:'2rem', borderRadius:'16px', textAlign:'left', maxWidth:'600px', margin:'0 auto', border:'1px solid var(--border)'}}>
-        {/* PERSONAL DETAILS */}
+        
         <div style={{marginBottom:'20px'}}>
           <h4 style={{color:'var(--text-main)', fontSize:'1.1rem', marginBottom:'10px'}}>Personal Details</h4>
           <p style={{color:'var(--text-sub)', marginBottom:'5px'}}><strong style={{color:'var(--text-main)'}}>Name:</strong> {formData.firstName} {formData.lastName}</p>
-          <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Location:</strong> {formData.city}, {formData.province || formData.region}, {formData.country}</p>
+          <p style={{color:'var(--text-sub)', marginBottom:'5px'}}><strong style={{color:'var(--text-main)'}}>Location:</strong> {formData.city}, {formData.province || formData.region}, {formData.country}</p>
+          {/* Added Username Display in Review */}
+          <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Portal Username:</strong> {formData.username}</p>
         </div>
 
-        {/* ENROLLMENT DETAILS */}
         <div style={{marginBottom:'20px', paddingBottom:'20px', borderBottom:'1px solid var(--border)'}}>
           <h4 style={{color:'var(--text-main)', fontSize:'1.1rem', marginBottom:'10px'}}>Enrollment Details</h4>
           <p style={{color:'var(--text-sub)', marginBottom:'5px'}}><strong style={{color:'var(--text-main)'}}>Start Date:</strong> {formData.entryDate}</p>
           <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Payment Type:</strong> {formData.scholarshipType}</p>
         </div>
 
-        {/* AUTOMATIC CALCULATION DISPLAY */}
         <div style={{marginTop:'20px', paddingTop:'20px', borderTop:'2px solid #fbbf24'}}>
           <h4 style={{color:'#fbbf24', fontSize:'1.2rem', marginBottom:'15px', textTransform:'uppercase', letterSpacing:'1px'}}>💰 Automatic Tuition Calculation</h4>
           
-          {/* SELECTED COURSES BREAKDOWN */}
           <div style={{marginBottom:'15px', background:'rgba(251, 191, 36, 0.05)', padding:'15px', borderRadius:'8px'}}>
             <p style={{color:'var(--text-sub)', marginBottom:'10px', fontWeight:'600'}}>Selected Courses:</p>
             {totals.selectedObjects.length === 0 ? (
@@ -448,7 +492,6 @@ const EnrollForm = () => {
             )}
           </div>
 
-          {/* PRICING SUMMARY */}
           <div style={{background:'rgba(251, 191, 36, 0.1)', padding:'15px', borderRadius:'8px', border:'1px solid #fbbf24'}}>
             <div style={{marginBottom:'10px', display:'flex', justifyContent:'space-between', alignItems:'center', paddingBottom:'10px', borderBottom:'1px dashed #fbbf24'}}>
               <span style={{color:'var(--text-sub)'}}>Subtotal ({totals.paidCount} course{totals.paidCount !== 1 ? 's' : ''})</span>
@@ -470,13 +513,11 @@ const EnrollForm = () => {
         </div>
       </div>
 
-      {/* PRIVACY CONSENT */}
       <label style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', marginTop:'2rem', cursor:'pointer', color:'var(--text-sub)'}}>
         <input type="checkbox" name="privacyConsent" onChange={handleChange} style={{width:'18px', height:'18px', accentColor:'#fbbf24'}} />
         <span>I certify the info is correct and agree to the Data Privacy Act.</span>
       </label>
       
-      {/* SUBMIT BUTTON */}
       <button className="btn-primary" onClick={handleSubmit} disabled={!formData.privacyConsent || isSubmitting} style={{marginTop:'2rem', width:'100%', maxWidth:'400px', padding:'1rem'}}>
         {isSubmitting ? 'Submitting...' : 'Submit Application'}
       </button>
@@ -490,6 +531,7 @@ const EnrollForm = () => {
         <div style={{background:'var(--bg-soft)', border:'1px solid var(--border)', padding:'2rem', maxWidth:'400px', margin:'2rem auto', borderRadius:'12px', color:'var(--text-main)'}}>
             <p style={{textTransform:'uppercase', fontSize:'0.8rem', color:'var(--text-sub)'}}>Application ID</p>
             <h3 style={{fontSize:'1.5rem', fontWeight:'bold', color:'var(--text-main)'}}>{successData?.id ? `#${successData.id}` : 'Pending'}</h3>
+            <p style={{fontSize:'0.9rem', color:'#fbbf24', marginTop:'1rem'}}>Your account is pending approval. You will be notified once your enrollment is confirmed.</p>
         </div>
     </div>
   );

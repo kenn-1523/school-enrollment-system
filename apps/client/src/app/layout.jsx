@@ -1,17 +1,20 @@
 import { Inter } from 'next/font/google';
 import { Providers } from './providers'; 
 
-// ✅ Keep your existing style import
-import '../features/marketing/styles.css'; 
+// ✅ CORRECT IMPORT ORDER:
+// 1. Load Legacy Styles FIRST (So they don't fight new styles)
+import '../features/marketing/styles.css';
+
+// 2. Load Tailwind LAST (So utility classes like 'flex' can override legacy bugs)
+import '../index.css'; 
 
 const inter = Inter({ subsets: ['latin'] });
 
-// ✅ UPGRADED SEO METADATA
 export const metadata = {
-  metadataBase: new URL('https://elitecroupier.com'), // Replace with your real domain
+  metadataBase: new URL('https://elitecroupier.com'), 
   title: {
     default: 'Elite Croupier Training Services | Casino Dealer School Philippines',
-    template: '%s | Elite Croupier Training' // Adds suffix to other pages automatically
+    template: '%s | Elite Croupier Training' 
   },
   description: 'The premier casino dealer training school in Makati, Philippines. Learn Blackjack, Poker, and Roulette from expert instructors and get job placement assistance.',
   keywords: ['casino dealer training', 'croupier school philippines', 'casino job hiring', 'learn poker', 'blackjack course manila', 'cruise ship casino jobs'],
@@ -23,7 +26,7 @@ export const metadata = {
     siteName: 'Elite Croupier Training',
     images: [
       {
-        url: '/images/og-social-card.jpg', // You should create this image (1200x630px)
+        url: '/images/og-social-card.jpg', 
         width: 1200,
         height: 630,
         alt: 'Elite Croupier Training Classroom',
@@ -40,8 +43,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      {/* We keep the body class minimal so your legacy 'styles.css' 
+         can handle the background colors naturally.
+      */}
+      <body className={`${inter.className} antialiased`}>
         <Providers>
           {children}
         </Providers>

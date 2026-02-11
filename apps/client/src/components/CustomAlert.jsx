@@ -1,8 +1,8 @@
 'use client'; 
 
-import React, { useEffect, useState } from 'react'; // ✅ FIX: Imported useState here
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { LogOut, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { LogOut, CheckCircle, AlertTriangle, X, Trash2 } from 'lucide-react'; // ✅ Added Trash2
 import { useTheme } from '../context/ThemeContext';
 import './CustomAlert.css';
 
@@ -22,12 +22,18 @@ const CustomAlert = ({ open = false, isOpen, type = 'logout', title = '', messag
     return () => document.body.classList.remove('modal-open');
   }, [visible]);
 
-  // Prevent hydration mismatch (Next.js specific fix)
   if (!mounted || !visible) return null;
 
   const config = {
     logout: {
       icon: <LogOut size={32} />,
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.08)',
+      btnClass: 'btn-danger'
+    },
+    // ✅ ADDED: Danger type for deletions
+    danger: {
+      icon: <Trash2 size={32} />,
       color: '#ef4444',
       bg: 'rgba(239, 68, 68, 0.08)',
       btnClass: 'btn-danger'
@@ -62,10 +68,12 @@ const CustomAlert = ({ open = false, isOpen, type = 'logout', title = '', messag
         {message && <p className="alert-message">{message}</p>}
 
         <div className="alert-actions">
-          {onClose && cancelText && (
-            <button className="btn-ghost" onClick={onClose}>{cancelText}</button>
+          {onClose && (
+            <button className="btn-ghost" onClick={onClose}>{cancelText || 'Cancel'}</button>
           )}
-          <button className={`btn-action ${currentConfig.btnClass}`} onClick={onConfirm}>{confirmText || 'Confirm'}</button>
+          <button className={`btn-action ${currentConfig.btnClass}`} onClick={onConfirm}>
+            {confirmText || 'Confirm'}
+          </button>
         </div>
       </div>
     </div>,

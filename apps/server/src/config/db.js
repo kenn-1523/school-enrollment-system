@@ -1,26 +1,26 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise'); // ✅ Must use 'promise'
 require('dotenv').config();
 
-// Create the connection instance
-const db = mysql.createConnection({
+// Create the Pool
+const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS || '',
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306 
+    port: process.env.DB_PORT || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-// Function to trigger the connection
-const connectDB = () => {
-    db.connect((err) => {
-        if (err) {
-            console.error('❌ Database connection failed:', err);
-            process.exit(1);
-        } else {
-            console.log('✅ Connected to MariaDB');
-        }
+// Test connection
+pool.getConnection()
+    .then(conn => {
+        console.log('✅ Database Pool Connected Successfully');
+        conn.release();
+    })
+    .catch(err => {
+        console.error('❌ Database Connection Failed:', err);
     });
-};
 
-// Export both the instance and the connector
-module.exports = { db, connectDB };
+module.exports = pool; // ✅ Export the POOL directly

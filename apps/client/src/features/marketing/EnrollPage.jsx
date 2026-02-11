@@ -93,6 +93,7 @@ const EnrollPage = () => {
     sex: 'Male', civilStatus: 'Single', dob: '', 
     educationLevel: '', employmentStatus: 'Unemployed', 
     privacyConsent: false,
+    username: '', password: '',
     idFile: null, 
     birthCertFile: null 
   });
@@ -259,6 +260,18 @@ const EnrollPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Validate username and password
+    if (!formData.username || formData.username.length < 6) {
+      showAlert('Username must be at least 6 characters.', 'error');
+      setIsSubmitting(false);
+      return;
+    }
+    if (!formData.password || formData.password.length < 6) {
+      showAlert('Password must be at least 6 characters.', 'error');
+      setIsSubmitting(false);
+      return;
+    }
 
     const finalCourses = [...new Set([...formData.selectedCourses, ...FREE_BUNDLE_IDS])];
     const subData = new FormData();
@@ -440,6 +453,42 @@ const EnrollPage = () => {
                 <div className="modern-input-group"><label>Mobile *</label><input className="modern-input" name="mobile" value={formData.mobile} onChange={handleChange} /></div>
             </div>
         </div>
+
+        {/* SECTION 4: ACCOUNT SECURITY */}
+        <div className="bg-zinc-900/80 p-6 rounded-xl border border-yellow-600/30 mt-8 backdrop-blur-sm" style={{background: 'rgba(24, 24, 27, 0.8)', padding: '1.5rem', borderRadius: '0.75rem', border: '1px solid rgba(217, 119, 6, 0.3)', marginTop: '2rem', backdropFilter: 'blur(4px)'}}>
+          <h3 className="text-xl font-bold text-yellow-500 mb-4 flex items-center gap-2" style={{fontSize: '1.25rem', fontWeight: 'bold', color: '#fbbf24', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
+            <Lock size={24} className="text-yellow-500" />
+            4. Account Security
+          </h3>
+          <p style={{color: '#a1a1a1', fontSize: '0.875rem', marginBottom: '1.5rem'}}>Create credentials to log in to your student portal after approval.</p>
+          
+          <div className="form-grid-2">
+            <div className="modern-input-group">
+              <label>Username *</label>
+              <input 
+                className="w-full bg-black/60 border border-zinc-700 text-white p-3 rounded-lg focus:border-yellow-500 outline-none transition" 
+                name="username" 
+                value={formData.username} 
+                onChange={handleChange}
+                placeholder="Choose a username (6+ chars)"
+                style={{width: '100%', background: 'rgba(0, 0, 0, 0.6)', border: '1px solid #3f3f46', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', outline: 'none', transition: 'all 0.3s'}}
+              />
+            </div>
+            <div className="modern-input-group">
+              <label>Password *</label>
+              <input 
+                type="password" 
+                className="w-full bg-black/60 border border-zinc-700 text-white p-3 rounded-lg focus:border-yellow-500 outline-none transition" 
+                name="password" 
+                value={formData.password} 
+                onChange={handleChange}
+                placeholder="Minimum 6 characters"
+                minLength="6"
+                style={{width: '100%', background: 'rgba(0, 0, 0, 0.6)', border: '1px solid #3f3f46', color: 'white', padding: '0.75rem', borderRadius: '0.5rem', outline: 'none', transition: 'all 0.3s'}}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -502,6 +551,7 @@ const EnrollPage = () => {
         <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Email:</strong> {formData.email}</p>
         <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Location:</strong> {formData.city}, {formData.province}, {formData.country}</p>
         <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Courses:</strong> {formData.selectedCourses.length} Selected</p>
+        <p style={{color:'var(--text-sub)'}}><strong style={{color:'var(--text-main)'}}>Username:</strong> {formData.username}</p>
       </div>
       
       <label style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'10px', marginTop:'2rem', cursor:'pointer', color:'var(--text-sub)'}}>
@@ -509,7 +559,7 @@ const EnrollPage = () => {
         <span>I certify the info is correct and agree to the Data Privacy Act.</span>
       </label>
       
-      <button className="btn-primary" onClick={handleSubmit} disabled={!formData.privacyConsent || isSubmitting} style={{marginTop:'2rem', width:'100%', maxWidth:'400px', padding:'1rem'}}>
+      <button className="btn-primary" onClick={handleSubmit} disabled={!formData.privacyConsent || isSubmitting || !formData.username || !formData.password} style={{marginTop:'2rem', width:'100%', maxWidth:'400px', padding:'1rem'}}>
         {isSubmitting ? 'Submitting...' : 'Submit Application'}
       </button>
     </div>

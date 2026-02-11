@@ -19,20 +19,20 @@ export const submitEnrollment = async (formData, idFile, birthCertFile) => {
             }
         });
 
-        // 2. Pack Files (if they exist)
+        // 2. Pack files
         if (idFile) payload.append('idFile', idFile);
         if (birthCertFile) payload.append('birthCertFile', birthCertFile);
 
-        // 3. Send to Server
+        // 3. Send
         const response = await axios.post(API_URL, payload, {
-            headers: { 'Content-Type': 'multipart/form-data' }
+            headers: { 'Content-Type': 'multipart/form-data' },
+            withCredentials: true,
         });
 
         return response.data;
 
     } catch (error) {
-        // Return a clean error message to the UI
-        const message = error.response?.data?.message || 'Server connection failed.';
-        throw new Error(message);
+        console.error("Enrollment submission failed:", error);
+        throw error;
     }
 };

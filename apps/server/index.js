@@ -1,6 +1,5 @@
 require('dotenv').config(); 
 const express = require('express');
-const mysql = require('mysql2');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
@@ -8,13 +7,17 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt'); 
 
+// ✅ IMPORT THE POOL
+const db = require('./src/config/db');
+
 // ✅ TOOLS
 const validate = require('./src/middleware/validateResources');
 const { loginSchema } = require('./src/schemas/authSchemas'); 
 
 // ✅ ROUTES
 const enrollRoutes = require('./src/routes/enroll.routes');
-const adminRoutes = require('./src/routes/admin.routes'); // <--- NEW!
+const adminRoutes = require('./src/routes/admin.routes'); 
+const studentRoutes = require('./src/routes/student.routes'); 
 
 // ✅ ENVIRONMENT CHECK
 const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_NAME', 'JWT_SECRET'];
@@ -26,7 +29,7 @@ if (missingEnvVars.length > 0) {
 
 const app = express();
 
-// ✅ CORS (Preserved)
+// ✅ CORS
 app.use(cors({
   origin: [
     "http://localhost:3000", 
@@ -39,64 +42,37 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// 🔒 SECURITY HEADERS
-app.use((req, res, next) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    next();
-});
-
-// ✅ DATABASE CONNECTION
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS || '',
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306 
-});
-
-db.connect((err) => {
-    if (err) console.error('❌ Database connection failed:', err);
-    else console.log('✅ Connected to MariaDB');
-});
-
-// ✅ DEPENDENCY INJECTION (Critical for your new Controllers)
+// ✅ DEPENDENCY INJECTION 
 app.use((req, res, next) => {
     req.db = db;
     next();
 });
 
 // ✅ FILE STORAGE SETUP
-const uploadDir = path.join(__dirname, 'secure_uploads');
+// Corrected path: points to apps/server/secure_uploads
+const uploadDir = path.join(__dirname, 'secure_uploads'); 
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-
 // ==========================================
-//           ⚡️ THE NEW CLEAN ROUTES
+//           ⚡️ ROUTES
 // ==========================================
 
-// 1. ENROLLMENT (Public)
 app.use('/api/enroll', enrollRoutes);
-
-// 2. ADMIN PANEL (Protected)
-// All logic for students, approvals, and files is now inside this file!
 app.use('/api/admin', adminRoutes);
+app.use('/api/student', studentRoutes);
 
 
 // ==========================================
-//           🔐 AUTH & LOGIN (Keep Here)
+//           🔐 AUTH & UTILS
 // ==========================================
-// We keep Login here for now to ensure stability.
-
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_EXPIRES_IN = '4h';
 
-// LOGIN
-app.post('/api/admin/login', validate(loginSchema), (req, res) => {
+// ADMIN LOGIN
+app.post('/api/admin/login', validate(loginSchema), async (req, res) => {
     const { username, password } = req.body;
-    db.query("SELECT * FROM admins WHERE username = ?", [username], async (err, result) => {
-        if (err) return res.status(500).json({ message: "Database Error" });
+    try {
+        const [result] = await db.query("SELECT * FROM admins WHERE username = ?", [username]);
         if (result.length === 0) return res.status(401).json({ success: false, message: "Invalid Credentials" });
 
         const adminUser = result[0];
@@ -109,7 +85,10 @@ app.post('/api/admin/login', validate(loginSchema), (req, res) => {
         } else {
             res.status(401).json({ success: false, message: "Invalid Credentials" });
         }
-    });
+    } catch (err) {
+        console.error("Login Error:", err);
+        res.status(500).json({ message: "Database Error" });
+    }
 });
 
 // LOGOUT
@@ -118,30 +97,33 @@ app.post('/api/logout', (req, res) => {
     res.json({ message: 'Logged out' });
 });
 
+// SECURE FILE SERVING
+app.get('/api/secure-file/:filename', (req, res) => {
+    const { filename } = req.params;
+    const filepath = path.join(uploadDir, filename);
+    
+    if (filename.includes('..')) return res.status(403).send('Access Denied');
+    if (fs.existsSync(filepath)) {
+        res.sendFile(filepath);
+    } else {
+        res.status(404).send('File not found');
+    }
+});
+
 // CHECK AUTH (ME)
 app.get('/api/me', (req, res) => {
     const token = req.cookies.token;
     if (!token) return res.status(401).send({ message: 'Not authenticated' });
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.isAdmin) return res.status(200).send({ user: { isAdmin: true, username: decoded.username } });
-        return res.status(403).send({ message: 'Access Denied' });
+        return res.status(200).send({ user: { isAdmin: decoded.isAdmin || false, username: decoded.username } });
     } catch (e) {
         return res.status(401).send({ message: 'Invalid token' });
     }
 });
 
-// ADMIN SETUP (Delete after use)
-app.get('/api/setup-admin', async (req, res) => {
-    const username = "admin"; 
-    const password = "admin123"; 
-    const hash = await bcrypt.hash(password, 10);
-    db.query("INSERT INTO admins (username, password_hash) VALUES (?, ?)", [username, hash], (err) => {
-        if(err) return res.json({ error: err.message });
-        res.json({ message: "Admin Created!" });
-    });
-});
-
-app.listen(process.env.PORT || 3001, () => {
-    console.log(`🚀 Server running on Port ${process.env.PORT || 3001}`);
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+    console.log(`🚀 SERVER RUNNING ON PORT ${PORT}`);
+    console.log("✅ Active Routes: /api/student/dashboard, /api/admin, /api/enroll");
 });

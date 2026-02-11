@@ -1,3 +1,9 @@
+// packages/business-logic/src/coursesData.js
+
+// ✅ IMPORT THE CONTENT
+// We import from './courses/index.js' which exports C1_CONTENT
+import { C1_CONTENT } from './courses/index'; 
+
 const courses = [
     { 
       code: "F1", 
@@ -67,7 +73,10 @@ const courses = [
       price: 0,
       duration: "2 Months",
       isPaid: false, 
-      objectives: ["Vocal projection", "Body language", "De-escalation"] 
+      objectives: ["Vocal projection", "Body language", "De-escalation"],
+      
+      // ✅ HERE IS WHERE WE ATTACH THE CONTENT
+      lessons: C1_CONTENT.lessons 
     },
     { 
       code: "C2", 
