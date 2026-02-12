@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const authenticateJWT = (req, res, next) => {
   try {
-    // ✅ Prefer admin_token, then student_token, then legacy token
+    // ✅ PRIORITY: admin_token > student_token > token
     const cookieToken =
       (req.cookies &&
         (req.cookies.admin_token || req.cookies.student_token || req.cookies.token)) ||

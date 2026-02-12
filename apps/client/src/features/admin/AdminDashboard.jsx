@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, Suspense, useMemo } from 'react';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Sun, Moon, X, FileText, ExternalLink, Trophy, Dices, Coins, Mail, Phone, Calendar, GraduationCap, Briefcase, MapPin } from 'lucide-react';
+import { Sun, Moon, X, FileText, ExternalLink, Mail, Phone, Calendar, GraduationCap, Briefcase, MapPin, BookOpen, ChevronDown, ListChecks } from 'lucide-react';
 
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-// ✅ IMPORT SEPARATED COMPONENTS
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import CustomAlert from '../../components/CustomAlert';
 import ApplicationsTable from '../../components/admin/tables/ApplicationsTable';
@@ -18,79 +17,48 @@ import SettingsPanel from '../../components/admin/settings/SettingsPanel';
 
 import './AdminDashboard.css';
 
-// ✅ IMPORTANT: Keep a single source of truth for the API base URL.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-// Normalize DB / API status values (DB uses: PENDING / APPROVED / REJECTED)
-const normalizeStatus = (status) => String(status || '').trim().toUpperCase();
-
-// Helper for Images
-const isImage = (filename) => {
-  if (!filename) return false;
-  return /\.(jpg|jpeg|png|gif|webp)$/i.test(filename);
-};
-
-// Helper for Date
 const formatDate = (isoString) => {
   if (!isoString) return 'N/A';
   return new Date(isoString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+    year: 'numeric', month: 'long', day: 'numeric'
   });
 };
 
-// Inner Component to handle Search Params safely
 function DashboardContent() {
   const router = useRouter();
   const { isDarkMode, toggleTheme } = useTheme();
   const searchParams = useSearchParams();
 
-  // --- STATE ---
-  // Initialize tab from URL or default to 'applications'
   const initialTab = searchParams.get('tab') || 'applications';
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const [students, setStudents] = useState([]);
-  const [enrolledProgress, setEnrolledProgress] = useState([]); // ✅ NEW: Enrolled Progress State
+  const [enrolledProgress, setEnrolledProgress] = useState([]); // Raw data (multiple rows per student)
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Modal State
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [viewMode, setViewMode] = useState('details'); // 'details' or 'progress'
+  const [viewMode, setViewMode] = useState('details'); 
 
-  // Alert State
   const [alertConfig, setAlertConfig] = useState({
-    isOpen: false,
-    type: 'default',
-    title: '',
-    message: '',
-    confirmText: 'Confirm',
-    onConfirm: () => {}
+    isOpen: false, type: 'default', title: '', message: '', confirmText: 'Confirm', onConfirm: () => {}
   });
 
-  // --- URL SYNC ---
-  // When URL changes, update state
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab) setActiveTab(tab);
   }, [searchParams]);
 
-  // --- DATA FETCHING ---
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const token =
-        localStorage.getItem("token") ||
-        localStorage.getItem("adminToken") ||
-        localStorage.getItem("authToken");
-
+      const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
       const res = await axios.get(`${API_URL}/api/admin/students?limit=1000`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         withCredentials: true,
       });
-
       const list = res?.data?.students || res?.data?.data || res?.data || [];
       setStudents(Array.isArray(list) ? list : []);
     } catch (err) {
@@ -101,14 +69,13 @@ function DashboardContent() {
     }
   };
 
-  // ✅ NEW: Fetch Enrolled Progress (Modules/Scores)
   const fetchEnrolledProgress = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/enrolled-progress`, { withCredentials: true });
-      setEnrolledProgress(res.data.students || []);
+      const res = await axios.get(`${API_URL}/api/admin/score-report`, { withCredentials: true });
+      setEnrolledProgress(res.data || []);
     } catch (err) {
-      console.error("Fetch enrolled progress error:", err);
+      console.error("Fetch score report error:", err);
       setEnrolledProgress([]);
     } finally {
       setLoading(false);
@@ -116,7 +83,6 @@ function DashboardContent() {
   };
 
   useEffect(() => {
-    // Initial fetch based on current tab
     if (activeTab === 'students') {
       fetchEnrolledProgress();
     } else {
@@ -124,13 +90,9 @@ function DashboardContent() {
     }
   }, []); 
 
-  // --- HANDLERS ---
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
-    // Update URL without reloading page
     router.push(`/admin?tab=${newTab}`);
-    
-    // ✅ NEW: Trigger specific fetch when switching tabs
     if (newTab === 'students') {
       fetchEnrolledProgress();
     } else if (newTab === 'applications' || newTab === 'rejected') {
@@ -140,15 +102,8 @@ function DashboardContent() {
 
   const triggerAlert = (type, title, message, confirmText, action) => {
     setAlertConfig({
-      isOpen: true,
-      type,
-      title,
-      message,
-      confirmText,
-      onConfirm: async () => {
-        await action();
-        setAlertConfig(prev => ({ ...prev, isOpen: false }));
-      }
+      isOpen: true, type, title, message, confirmText,
+      onConfirm: async () => { await action(); setAlertConfig(prev => ({ ...prev, isOpen: false })); }
     });
   };
 
@@ -157,30 +112,54 @@ function DashboardContent() {
     setViewMode(mode);
   };
 
+  // ✅ LOGIC: Group raw rows by Student ID so the table only shows 1 row per student
+  const uniqueStudents = useMemo(() => {
+    const map = new Map();
+    enrolledProgress.forEach(row => {
+      if (!map.has(row.student_id)) {
+        map.set(row.student_id, {
+            ...row,
+            courseCount: 1 // Start counting
+        });
+      } else {
+        // Increment count for display
+        const existing = map.get(row.student_id);
+        existing.courseCount += 1;
+      }
+    });
+    return Array.from(map.values());
+  }, [enrolledProgress]);
+
+  // ✅ LOGIC: When clicking a unique student, find ALL their courses from raw data
+  const handleViewProgress = (row) => {
+    const allCoursesForStudent = enrolledProgress.filter(
+      item => item.student_id === row.student_id
+    );
+    
+    setSelectedStudent({
+      ...row,
+      all_courses: allCoursesForStudent 
+    });
+    setViewMode('progress');
+  };
+
   const getFileUrl = (filename) => `${API_URL}/api/secure-file/${filename}`;
 
-  // --- FILTERING ---
+  // Filters
   const filteredStudents = students.filter(s =>
     (s.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (s.last_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (s.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (s.student_id?.toString() || '').includes(searchQuery)
   );
-
-  // ✅ FIXED: Uppercase status matching
   const applications = filteredStudents.filter(s => String(s.application_status || '').toUpperCase() === 'PENDING');
-  // Note: Enrolled table now uses `enrolledProgress` state directly, so this filter is just for fallback or legacy count
-  const enrolled = filteredStudents.filter(s => String(s.application_status || '').toUpperCase() === 'APPROVED' || String(s.application_status || '').toUpperCase() === 'ENROLLED');
   const rejected = filteredStudents.filter(s => String(s.application_status || '').toUpperCase() === 'REJECTED');
 
   return (
     <div className={isDarkMode ? 'dark-mode' : 'light-mode'}>
       <div className="admin-layout">
-
-        {/* SIDEBAR */}
         <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
 
-        {/* MAIN CONTENT AREA */}
         <main className="main-content">
           <header className="top-bar">
             <h2 className="page-title">
@@ -200,7 +179,6 @@ function DashboardContent() {
           </header>
 
           <div className="content-wrapper">
-
             {activeTab === 'applications' && (
               <ApplicationsTable
                 data={applications}
@@ -213,19 +191,15 @@ function DashboardContent() {
               />
             )}
 
-            {/* ✅ FIXED: Use EnrolledProgress state and fetch function */}
             {activeTab === 'students' && (
               <EnrolledTable
-                data={enrolledProgress}
+                data={uniqueStudents} // ✅ Pass UNIQUE list
                 loading={loading}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 refreshData={fetchEnrolledProgress}
                 triggerAlert={triggerAlert}
-                onRowClick={(student) => {
-                    setSelectedStudent(student);
-                    setViewMode('progress');
-                }}
+                onRowClick={handleViewProgress} 
               />
             )}
 
@@ -244,7 +218,6 @@ function DashboardContent() {
             {activeTab === 'settings' && (
               <SettingsPanel triggerAlert={triggerAlert} />
             )}
-
           </div>
         </main>
       </div>
@@ -258,15 +231,13 @@ function DashboardContent() {
             <div className="modal-header">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-xl font-bold text-white uppercase">
-                  {selectedStudent.first_name?.[0] || 'S'}
+                  {(selectedStudent.student_name?.[0]) || (selectedStudent.first_name?.[0]) || 'S'}
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">
-                    {selectedStudent.first_name} {selectedStudent.last_name}
+                    {selectedStudent.student_name || `${selectedStudent.first_name} ${selectedStudent.last_name}`}
                   </h2>
-                  <p className="text-sm text-slate-400">Student ID: #{selectedStudent.student_id}</p>
-                  {/* ✅ ADDED: Start Date in Header */}
-                  <p className="text-xs text-slate-500">Start Date: {selectedStudent.start_date || 'N/A'}</p>
+                  <p className="text-sm text-slate-400">{selectedStudent.email}</p>
                 </div>
               </div>
               <button onClick={() => setSelectedStudent(null)} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors">
@@ -274,56 +245,44 @@ function DashboardContent() {
               </button>
             </div>
 
-            {/* Body - Switch based on Mode */}
+            {/* Body */}
             <div className="modal-body p-6 overflow-y-auto max-h-[70vh]">
 
-              {/* --- MODE 1: DETAILS (App/Rejected) --- */}
               {viewMode === 'details' && (
                 <div className="space-y-8">
-                  {/* Personal Info */}
                   <div>
                     <h3 className="text-sm font-bold text-blue-500 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">Personal Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       <div><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><Mail size={12} /> Email</label><div className="text-slate-200">{selectedStudent.email}</div></div>
                       <div><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><Phone size={12} /> Mobile</label><div className="text-slate-200">{selectedStudent.mobile || 'N/A'}</div></div>
                       <div><label className="block text-xs text-slate-500 mb-1">Civil Status</label><div className="text-slate-200">{selectedStudent.civil_status || 'N/A'}</div></div>
-                      <div><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><Calendar size={12} /> Date of Birth</label><div className="text-slate-200">{formatDate(selectedStudent.dob)}</div></div>
+                      <div><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><Calendar size={12} /> DOB</label><div className="text-slate-200">{formatDate(selectedStudent.dob)}</div></div>
                       <div><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><GraduationCap size={12} /> Education</label><div className="text-slate-200">{selectedStudent.education_level || 'N/A'}</div></div>
                       <div><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><Briefcase size={12} /> Employment</label><div className="text-slate-200">{selectedStudent.employment_status || 'N/A'}</div></div>
                       <div className="col-span-full"><label className="block text-xs text-slate-500 mb-1 flex items-center gap-1"><MapPin size={12} /> Address</label><div className="text-slate-200">{selectedStudent.city}, {selectedStudent.province} {selectedStudent.zip_code}</div></div>
                     </div>
                   </div>
-
-                  {/* Documents */}
                   <div>
                     <h3 className="text-sm font-bold text-blue-500 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">Submitted Documents</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* ID File */}
                       <div className="bg-[#0f172a] p-4 rounded-lg border border-slate-700 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <FileText className="text-slate-400" size={24} />
-                          <div>
-                            <p className="text-sm font-bold text-slate-200">Valid ID</p>
-                            <p className="text-xs text-slate-500">{selectedStudent.id_file ? 'Uploaded' : 'Missing'}</p>
-                          </div>
+                          <div><p className="text-sm font-bold text-slate-200">Valid ID</p><p className="text-xs text-slate-500">{selectedStudent.id_file ? 'Uploaded' : 'Missing'}</p></div>
                         </div>
                         {selectedStudent.id_file && (
-                          <a href={getFileUrl(selectedStudent.id_file)} target="_blank" rel="noopener noreferrer" className="p-2 bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white rounded transition-colors">
-                            <ExternalLink size={18} />
-                          </a>
+                          <a href={getFileUrl(selectedStudent.id_file)} target="_blank" rel="noopener noreferrer" className="p-2 bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white rounded transition-colors"><ExternalLink size={18} /></a>
                         )}
                       </div>
+                      {/* Birth Cert */}
                       <div className="bg-[#0f172a] p-4 rounded-lg border border-slate-700 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <FileText className="text-slate-400" size={24} />
-                          <div>
-                            <p className="text-sm font-bold text-slate-200">Birth Certificate</p>
-                            <p className="text-xs text-slate-500">{selectedStudent.birth_cert_file ? 'Uploaded' : 'Missing'}</p>
-                          </div>
+                          <div><p className="text-sm font-bold text-slate-200">Birth Certificate</p><p className="text-xs text-slate-500">{selectedStudent.birth_cert_file ? 'Uploaded' : 'Missing'}</p></div>
                         </div>
                         {selectedStudent.birth_cert_file && (
-                          <a href={getFileUrl(selectedStudent.birth_cert_file)} target="_blank" rel="noopener noreferrer" className="p-2 bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white rounded transition-colors">
-                            <ExternalLink size={18} />
-                          </a>
+                          <a href={getFileUrl(selectedStudent.birth_cert_file)} target="_blank" rel="noopener noreferrer" className="p-2 bg-blue-600/10 text-blue-500 hover:bg-blue-600 hover:text-white rounded transition-colors"><ExternalLink size={18} /></a>
                         )}
                       </div>
                     </div>
@@ -331,87 +290,80 @@ function DashboardContent() {
                 </div>
               )}
 
-              {/* --- MODE 2: PROGRESS (Enrolled) --- */}
+              {/* --- MODE 2: DROPDOWN LIST (ACCORDION) --- */}
               {viewMode === 'progress' && (
-                <div className="space-y-8">
-                  {/* Stats Overview - Calculated from modules if available, else 0 */}
-                  <div className="grid grid-cols-3 gap-4 mb-8">
-                    <div className="bg-[#0f172a] p-4 rounded-lg border border-slate-700 text-center">
-                      <Trophy className="mx-auto text-amber-500 mb-2" size={24} />
-                      <div className="text-2xl font-bold text-white">
-                        {selectedStudent.modules?.reduce((acc, m) => acc + (m.status === 'COMPLETED' ? 1 : 0), 0) || 0}
-                      </div>
-                      <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Modules Completed</div>
-                    </div>
-                    <div className="bg-[#0f172a] p-4 rounded-lg border border-slate-700 text-center">
-                      <Dices className="mx-auto text-emerald-500 mb-2" size={24} />
-                      <div className="text-2xl font-bold text-white">
-                        {(() => {
-                           const scores = selectedStudent.modules?.filter(m => m.avg_quiz_score != null).map(m => Number(m.avg_quiz_score)) || [];
-                           const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-                           return Math.round(avg) + '%';
-                        })()}
-                      </div>
-                      <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Average Score</div>
-                    </div>
-                    <div className="bg-[#0f172a] p-4 rounded-lg border border-slate-700 text-center">
-                      <Coins className="mx-auto text-blue-500 mb-2" size={24} />
-                      <div className="text-2xl font-bold text-white">Trainee</div>
-                      <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Current Rank</div>
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-sm font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-2">
+                       <BookOpen size={16} /> Enrolled Courses ({selectedStudent.all_courses?.length || 0})
+                     </h3>
                   </div>
 
-                  {/* ✅ UPDATED: Module List from Prompt */}
-                  <div>
-                    <h3 className="text-sm font-bold text-emerald-500 uppercase tracking-wider mb-4 border-b border-slate-700 pb-2">
-                        Module Progress
-                    </h3>
+                  {selectedStudent.all_courses && selectedStudent.all_courses.length > 0 ? (
+                    selectedStudent.all_courses.map((course, idx) => (
+                      <details key={`${course.course_code}-${idx}`} className="group bg-[#0f172a] border border-slate-700 rounded-lg overflow-hidden transition-all duration-200 open:border-blue-500/50 open:shadow-lg open:shadow-blue-900/10">
+                        
+                        <summary className="p-4 cursor-pointer list-none flex items-center justify-between hover:bg-slate-800/50 transition-colors">
+                          <div className="flex items-center gap-4">
+                             <div className={`p-2 rounded-lg ${course.status === 'Completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                                <BookOpen size={20} />
+                             </div>
+                             <div>
+                               <h4 className="text-sm font-bold text-white group-open:text-blue-400 transition-colors">
+                                 {course.course_title}
+                               </h4>
+                               <p className="text-xs text-slate-500 font-mono">{course.course_code}</p>
+                             </div>
+                          </div>
 
-                    {(!selectedStudent.modules || selectedStudent.modules.length === 0) ? (
-                        <div className="bg-[#0f172a] border border-slate-700 rounded-lg p-8 text-center">
-                        <p className="text-slate-400 font-medium">No modules found for this student.</p>
+                          <div className="flex items-center gap-6">
+                            <div className="text-right">
+                              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Grade</p>
+                              <p className="text-base font-bold text-white">{course.grade || '—'}</p>
+                            </div>
+                            <ChevronDown className="w-5 h-5 text-slate-500 group-open:rotate-180 transition-transform duration-200" />
+                          </div>
+                        </summary>
+
+                        <div className="p-4 border-t border-slate-700/50 bg-[#1e293b]/50">
+                           <div className="mb-3 flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                              <ListChecks size={14} /> Quiz Breakdown
+                           </div>
+
+                           {course.grade_details ? (
+                             <div className="grid grid-cols-1 gap-2">
+                               {course.grade_details.split('|').map((item, i) => {
+                                 const [label, score] = item.split(':').map(s => s.trim());
+                                 return (
+                                   <div key={i} className="flex items-center justify-between p-2 bg-slate-800 rounded border border-slate-700/50">
+                                      <span className="text-sm text-slate-300">{label}</span>
+                                      <span className={`font-mono font-bold text-sm ${score?.startsWith('0') ? 'text-slate-500' : 'text-emerald-400'}`}>
+                                        {score}
+                                      </span>
+                                   </div>
+                                 );
+                               })}
+                             </div>
+                           ) : (
+                             <div className="text-center py-4 text-slate-500 italic text-sm">
+                               No quiz data recorded.
+                             </div>
+                           )}
+                           
+                           <div className="mt-4 pt-3 border-t border-slate-700/50 flex justify-between text-xs text-slate-500">
+                             <span>Enrolled: {formatDate(course.enrolled_at)}</span>
+                             <span className={`px-2 py-0.5 rounded-full font-bold ${
+                               course.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-500'
+                             }`}>
+                               {course.status || 'In Progress'}
+                             </span>
+                           </div>
                         </div>
-                    ) : (
-                        <div className="space-y-3">
-                        {selectedStudent.modules.map((m, idx) => (
-                            <div key={`${m.course_code}-${idx}`} className="bg-[#0f172a] border border-slate-700 rounded-lg p-4">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                <div className="text-sm font-bold text-slate-200">{m.course_title}</div>
-                                <div className="text-xs text-slate-500">{m.course_code}</div>
-                                </div>
-
-                                <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
-                                m.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : m.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                : 'bg-slate-500/10 text-slate-400 border-slate-500/20'
-                                }`}>
-                                {m.status}
-                                </span>
-                            </div>
-
-                            <div className="mt-3">
-                                <div className="flex items-center gap-2">
-                                <div className="w-full bg-slate-700 rounded-full h-2">
-                                    <div
-                                    className="bg-emerald-500 h-2 rounded-full"
-                                    style={{ width: `${m.progress_percent || 0}%` }}
-                                    />
-                                </div>
-                                <div className="text-xs text-slate-400 w-10 text-right">{m.progress_percent || 0}%</div>
-                                </div>
-
-                                <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-400">
-                                <div><span className="text-slate-500">Lessons:</span> {m.completed_lessons}/{m.total_lessons}</div>
-                                <div><span className="text-slate-500">Avg Score:</span> {m.avg_quiz_score == null ? '—' : Number(m.avg_quiz_score).toFixed(1)}</div>
-                                <div><span className="text-slate-500">Last Done:</span> {m.last_completed_at ? new Date(m.last_completed_at).toLocaleString() : '—'}</div>
-                                </div>
-                            </div>
-                            </div>
-                        ))}
-                        </div>
-                    )}
-                    </div>
+                      </details>
+                    ))
+                  ) : (
+                    <div className="text-center py-10 text-slate-500">No courses found.</div>
+                  )}
                 </div>
               )}
             </div>
@@ -425,39 +377,21 @@ function DashboardContent() {
         </div>
       )}
 
-      {/* --- ALERT COMPONENT --- */}
       <CustomAlert
-        isOpen={alertConfig.isOpen}
-        type={alertConfig.type}
-        title={alertConfig.title}
-        message={alertConfig.message}
-        onConfirm={alertConfig.onConfirm}
-        onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
-        confirmText={alertConfig.confirmText}
-        cancelText="Cancel"
+        isOpen={alertConfig.isOpen} type={alertConfig.type} title={alertConfig.title} message={alertConfig.message}
+        onConfirm={alertConfig.onConfirm} onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+        confirmText={alertConfig.confirmText} cancelText="Cancel"
       />
     </div>
   );
 }
 
-// Main component wraps content in Suspense to prevent hydration errors
 const AdminDashboard = () => {
   const auth = useAuth();
-
-  useEffect(() => {
-    if (!auth.loading && !auth.isAdmin) {
-      window.location.href = '/login';
-    }
-  }, [auth.loading, auth.isAdmin]);
-
+  useEffect(() => { if (!auth.loading && !auth.isAdmin) window.location.href = '/login'; }, [auth.loading, auth.isAdmin]);
   if (auth.loading) return <div className="loading-screen">Loading Portal...</div>;
   if (!auth.isAdmin) return null;
-
-  return (
-    <Suspense fallback={<div className="loading-screen">Loading...</div>}>
-      <DashboardContent />
-    </Suspense>
-  );
+  return <Suspense fallback={<div className="loading-screen">Loading...</div>}><DashboardContent /></Suspense>;
 };
 
 export default AdminDashboard;

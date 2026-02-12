@@ -5,7 +5,8 @@ const jwt = require('jsonwebtoken');
 
 // 🛡️ AUTH MIDDLEWARE
 const authenticateStudent = (req, res, next) => {
-    const token = req.cookies.token;
+const token = req.cookies.student_token || req.cookies.token;
+
     if (!token) return res.status(401).json({ message: "Not Authenticated" });
 
     try {

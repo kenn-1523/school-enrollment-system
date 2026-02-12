@@ -81,7 +81,13 @@ app.post('/api/admin/login', validate(loginSchema), (req, res) => {
         
         if (match) {
             const token = jwt.sign({ isAdmin: true, username: adminUser.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-            res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'lax', maxAge: 14400000 });
+res.cookie('admin_token', token, {
+  httpOnly: true,
+  secure: false,
+  sameSite: 'lax',
+  maxAge: 4 * 60 * 60 * 1000
+});
+
             res.status(200).json({ success: true });
         } else {
             res.status(401).json({ success: false, message: "Invalid Credentials" });

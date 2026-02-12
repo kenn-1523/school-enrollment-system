@@ -22,7 +22,12 @@ class StudentController {
                 { expiresIn: '1d' }
             );
 
-            res.cookie('token', token, { httpOnly: true, secure: false, sameSite: 'lax', maxAge: 86400000 });
+res.cookie('student_token', token, {
+  httpOnly: true,
+  secure: false,
+  sameSite: 'lax',
+  maxAge: 24 * 60 * 60 * 1000
+});
 
             return res.json({
                 success: true,
@@ -131,15 +136,18 @@ class StudentController {
                 if (answers[q.id] === q.correct_answer) score++;
             });
 
+            // Determine if they passed (for the success message)
             const passedCurrent = score >= Math.ceil(currentTotalQuestions * 0.7);
 
+            // 🔥 FIX: Always set isCompleted to 1 so progress counts, even if they fail.
+            const isCompleted = 1;
+
             // B. Save Progress to History (Upsert)
-            // Saves regardless of pass/fail
             await db.query(`
                 INSERT INTO student_progress (student_id, lesson_id, is_completed, quiz_score, completed_at)
                 VALUES (?, ?, ?, ?, NOW())
                 ON DUPLICATE KEY UPDATE quiz_score = VALUES(quiz_score), is_completed = VALUES(is_completed), completed_at = NOW()
-            `, [studentId, lessonId, passedCurrent, score, passedCurrent]);
+            `, [studentId, lessonId, isCompleted, score]);
 
             // =========================================================
             // C. CALCULATE COURSE-WIDE GRADES (For Dashboard & Admin)
@@ -175,7 +183,10 @@ class StudentController {
                     const totalEarned = allProgress.reduce((sum, p) => sum + (p.quiz_score || 0), 0);
                     const summaryGrade = `${totalEarned}/${courseTotalPoints}`; 
                     
+                    // Count how many lessons are marked completed
                     const lessonsCompletedCount = allProgress.filter(p => p.is_completed).length;
+                    
+                    // Calculate percentage
                     const progressPercent = Math.round((lessonsCompletedCount / allLessons.length) * 100);
                     const status = progressPercent === 100 ? 'Completed' : 'In Progress';
 
