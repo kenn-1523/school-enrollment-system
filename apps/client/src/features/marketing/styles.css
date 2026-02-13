@@ -7,10 +7,9 @@ html, body {
     margin: 0;
     padding: 0;
     width: 100%;
-    /* These two lines break the "Scroll Trap" */
-    height: auto !important; 
-    overflow-y: visible !important; 
-    overflow-x: hidden; /* Keeps horizontal scroll hidden */
+    height: 100%;       /* Restores normal height behavior */
+    overflow-x: hidden; /* Prevents side-scrolling */
+    overflow-y: auto;   /* Restores normal vertical scrolling */
 }
 
 /* Ensure your main container doesn't trap the scroll either */
@@ -606,7 +605,22 @@ h1, h2, h3, h4, .brand-title, .section-header h3, .contact-header {
 /* =========================================
    6. FOOTER & CTA
    ========================================= */
-.cta-section { padding: 6rem 5%; text-align: center; background: var(--bg-soft); border-top: 1px solid var(--border); }
+/* 1. Force the container to center all flex items */
+.cta-section {
+  text-align: center;
+  padding: 6rem 0;
+}
+
+.cta-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cta-content .btn-white {
+  margin-top: 25px;
+}
+
 .cta-content h2 { font-size: 3rem; color: white; margin-bottom: 1rem; }
 .btn-white { background: var(--primary); color: #000; padding: 1rem 3rem; border-radius: 50px; font-weight: 800; border: none; cursor: pointer; font-size: 1.1rem; }
 
