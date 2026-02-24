@@ -1,31 +1,50 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
 import CustomAlert from '../../components/CustomAlert';
 import { useAuth } from '../../context/AuthContext';
-import './AdminLogin.css'; 
+import './AdminLogin.css';
+
+/**
+ * ✅ Works BOTH locally and deployed using env var
+ *
+ * Local (apps/client/.env.local):
+ *   NEXT_PUBLIC_API_URL=http://localhost:3001
+ *
+ * Production (hosting env):
+ *   NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
+ *
+ * NOTE:
+ * - This component uses cookies (withCredentials: true)
+ * - Backend must allow CORS credentials if cross-origin
+ */
+
+const RAW_API_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+function normalizeBaseUrl(url) {
+  if (!url) return '';
+  return url.replace(/\/+$/, '');
+}
 
 const LoginPage = () => {
   const router = useRouter();
-  const { adminLogin, isAdmin, loading } = useAuth(); // Pull isAdmin and loading
+  const { adminLogin, isAdmin, loading } = useAuth();
+
+  const API_BASE_URL = useMemo(() => normalizeBaseUrl(RAW_API_URL), []);
 
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [status, setStatus] = useState({ loading: false, error: '' });
   const [showPassword, setShowPassword] = useState(false);
-  
-  // ✅ SMART URL: Detects if you are on Localhost or Cloud
-  const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:3001' 
-    : 'https://mediumpurple-turtle-960137.hostingersite.com/backend_api';
-  
+
   // Controls the Success Modal
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  // --- 🔒 SECURITY FIX: AUTO-REDIRECT IF ALREADY LOGGED IN ---
+  // ✅ AUTO-REDIRECT IF ALREADY LOGGED IN
   useEffect(() => {
     if (!loading && isAdmin) {
       router.replace('/admin');
@@ -33,8 +52,8 @@ const LoginPage = () => {
   }, [isAdmin, loading, router]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-    setStatus({ ...status, error: '' }); 
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setStatus((prev) => ({ ...prev, error: '' }));
   };
 
   const handleSubmit = async (e) => {
@@ -42,47 +61,74 @@ const LoginPage = () => {
     setStatus({ loading: true, error: '' });
 
     try {
-      // ✅ USE THE SMART URL VARIABLE HERE
-      await axios.post(`${API_BASE_URL}/api/admin/login`, {
-        username: formData.username,
-        password: formData.password
-      }, {
-        withCredentials: true 
-      });
+      await axios.post(
+        `${API_BASE_URL}/api/admin/login`,
+        {
+          username: formData.username,
+          password: formData.password
+        },
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 20000
+        }
+      );
 
-      // 2. Success - Show Modal
+      // Success - show modal
       setStatus({ loading: false, error: '' });
       setLoginModalOpen(true);
-      
     } catch (err) {
-      console.error(err);
-      setStatus({ 
-        loading: false, 
-        error: 'Access Denied: Invalid Admin Credentials' 
-      });
+      console.error('Admin login error:', err);
+
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        'Access Denied: Invalid Admin Credentials';
+
+      setStatus({ loading: false, error: message });
     }
   };
 
-  // 3. Proceed to Dashboard
+  // Proceed to Dashboard
   const handleProceedToDashboard = async () => {
-      setLoginModalOpen(false);
-      
-      // Update Context
-      if (adminLogin) {
-          await adminLogin(); 
+    setLoginModalOpen(false);
+
+    // Update Context
+    try {
+      if (typeof adminLogin === 'function') {
+        await adminLogin();
       }
-      
-      // Navigate
-      router.push('/admin');
+    } catch (err) {
+      console.error('adminLogin() refresh error:', err);
+    }
+
+    // Navigate
+    router.push('/admin');
   };
 
-  // If we are checking auth, show a blank screen or loader to prevent form flash
-  if (loading || isAdmin) return <div style={{height: '100vh', background: '#0f172a'}}></div>;
+  // If we are checking auth, show blank screen to prevent form flash
+  if (loading || isAdmin) {
+    return <div style={{ height: '100vh', background: '#0f172a' }}></div>;
+  }
 
   return (
     <>
       <div className="admin-login-wrapper">
-        <Link href="/" style={{position: 'absolute', top: '20px', left: '20px', textDecoration: 'none', fontWeight: 'bold', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px', zIndex: 20}}>
+        <Link
+          href="/"
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            textDecoration: 'none',
+            fontWeight: 'bold',
+            color: '#94a3b8',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            zIndex: 20
+          }}
+        >
           &larr; Back to Site
         </Link>
 
@@ -96,7 +142,16 @@ const LoginPage = () => {
           </div>
 
           {status.error && (
-            <div style={{background: 'rgba(239,68,68,0.1)', color: '#ef4444', padding: '12px', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.9rem'}}>
+            <div
+              style={{
+                background: 'rgba(239,68,68,0.1)',
+                color: '#ef4444',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '1.5rem',
+                fontSize: '0.9rem'
+              }}
+            >
               {status.error}
             </div>
           )}
@@ -104,61 +159,92 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit}>
             <div className="admin-input-group">
               <label>Username</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 name="username"
                 required
                 value={formData.username}
                 onChange={handleChange}
                 placeholder="admin"
-                className="admin-input" 
+                className="admin-input"
+                autoComplete="username"
               />
             </div>
 
             <div className="admin-input-group">
               <label>Password</label>
-              <div style={{position: 'relative'}}>
-                <input 
-                  type={showPassword ? "text" : "password"} 
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   required
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
                   className="admin-input"
-                  style={{ paddingRight: '40px' }} 
+                  style={{ paddingRight: '40px' }}
+                  autoComplete="current-password"
                 />
-                <button 
+                <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', display: 'flex'}}
+                  onClick={() => setShowPassword((v) => !v)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#94a3b8',
+                    display: 'flex'
+                  }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={status.loading}
-              className="btn-admin-submit" 
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              className="btn-admin-submit"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                opacity: status.loading ? 0.7 : 1,
+                cursor: status.loading ? 'not-allowed' : 'pointer'
+              }}
             >
-              {status.loading ? <Loader className="animate-spin" size={20} /> : <>Login <ArrowRight size={20} /></>}
+              {status.loading ? (
+                <Loader className="animate-spin" size={20} />
+              ) : (
+                <>
+                  Login <ArrowRight size={20} />
+                </>
+              )}
             </button>
           </form>
+
+          {/* Optional small debug: remove if you don't want it */}
+          <div style={{ marginTop: '14px', fontSize: '10px', color: '#64748b' }}>
+            API: {API_BASE_URL}
+          </div>
         </div>
       </div>
 
       {/* SUCCESS MODAL */}
-      <CustomAlert 
-        isOpen={loginModalOpen} 
-        type="success" 
-        title="Access Granted" 
-        message="Redirecting to dashboard..." 
-        onConfirm={handleProceedToDashboard} 
-        onClose={() => setLoginModalOpen(false)} 
-        confirmText="Open Dashboard" 
+      <CustomAlert
+        isOpen={loginModalOpen}
+        type="success"
+        title="Access Granted"
+        message="Redirecting to dashboard..."
+        onConfirm={handleProceedToDashboard}
+        onClose={() => setLoginModalOpen(false)}
+        confirmText="Open Dashboard"
       />
     </>
   );

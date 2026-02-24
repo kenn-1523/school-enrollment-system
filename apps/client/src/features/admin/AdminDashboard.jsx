@@ -51,23 +51,49 @@ function DashboardContent() {
     if (tab) setActiveTab(tab);
   }, [searchParams]);
 
-  const fetchStudents = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token") || localStorage.getItem("adminToken");
-      const res = await axios.get(`${API_URL}/api/admin/students?limit=1000`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        withCredentials: true,
-      });
-      const list = res?.data?.students || res?.data?.data || res?.data || [];
-      setStudents(Array.isArray(list) ? list : []);
-    } catch (err) {
-      console.error("Fetch error:", err);
+const fetchStudents = async () => {
+  setLoading(true);
+
+  try {
+    const token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("adminToken");
+
+    if (!token) {
+      console.warn("No auth token found.");
       setStudents([]);
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+    const res = await axios.get(
+      `${API_URL}/api/admin/students?limit=1000`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      }
+    );
+
+    console.log("Students API response:", res.data);
+
+    const list =
+      res?.data?.students ||
+      res?.data?.data ||
+      res?.data ||
+      [];
+
+    setStudents(Array.isArray(list) ? list : []);
+  } catch (err) {
+    console.error(
+      "Fetch students error:",
+      err.response?.data || err.message
+    );
+    setStudents([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const fetchEnrolledProgress = async () => {
     setLoading(true);

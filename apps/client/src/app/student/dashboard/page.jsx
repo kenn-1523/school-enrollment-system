@@ -20,8 +20,7 @@ import { coursesData } from '@repo/business-logic';
 // The Player Modal
 import StudentCourseModal from '../../../components/courses/StudentCourseModal';
 
-const API_URL = 'http://localhost:3001/api';
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export default function StudentDashboard() {
   const router = useRouter();
   
@@ -38,6 +37,7 @@ export default function StudentDashboard() {
   // ✅ 1. SECURITY CHECK (Runs First)
   useEffect(() => {
     const checkAuth = () => {
+      // We check for the session flag in localStorage
       const isLoggedIn = localStorage.getItem('isStudentLoggedIn');
       console.log("Dashboard Security Check - isStudentLoggedIn:", isLoggedIn);
 
@@ -59,9 +59,10 @@ export default function StudentDashboard() {
     const fetchDashboard = async () => {
       try {
         console.log("Fetching Dashboard Data...");
-        const response = await axios.get(`${API_URL}/student/dashboard`, {
-          withCredentials: true 
-        });
+        // Updated to use the dynamic API_URL
+const response = await axios.get(`${API_URL}/api/student/dashboard`, {
+  withCredentials: true
+});
 
         console.log("Data Received:", response.data);
         const data = response.data;
@@ -302,11 +303,11 @@ export default function StudentDashboard() {
                             {courseItem.status || 'In Progress'}
                         </div>
                         
-{/* GRADE BADGE */}
+                        {/* GRADE BADGE */}
                         {courseItem.grade && courseItem.grade !== 'N/A' && (
                             <div className="flex items-center gap-1 bg-amber-900/20 text-amber-500 px-2 py-1 rounded border border-amber-900/30 text-[10px] font-bold">
                                 <Trophy size={12} />
-                                <span>{courseItem.grade}</span> {/* Displays "9/30" */}
+                                <span>{courseItem.grade}</span>
                             </div>
                         )}
                     </div>

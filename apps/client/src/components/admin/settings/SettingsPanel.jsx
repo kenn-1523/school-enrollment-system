@@ -5,7 +5,8 @@ import axios from 'axios';
 import { Lock, Save } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// ✅ FIXED: Added quotes around the URL string so the build doesn't crash
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://croupiertraining.sgwebworks.com";
 
 export default function SettingsPanel({ triggerAlert }) {
   // NOTE: your AuthContext might expose different keys (user/admin).

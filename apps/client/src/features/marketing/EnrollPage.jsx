@@ -283,14 +283,17 @@ const EnrollPage = () => {
 
     if (formData.idFile) subData.append('idFile', formData.idFile);
     if (formData.birthCertFile) subData.append('birthCertFile', formData.birthCertFile);
-
-    try {
-      const res = await axios.post('http://localhost:3001/api/enroll', subData, { headers: { 'Content-Type': 'multipart/form-data' }});
+try {
+      // Use the dynamic API_URL instead of the hardcoded localhost
+      const res = await axios.post(`${API_URL}/enroll`, subData, { 
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setSuccessData({ id: res.data.id || 'Pending' });
-      window.scrollTo(0,0);
+      window.scrollTo(0, 0);
       setCurrentStep(4);
       showAlert('Application Submitted Successfully!', 'success');
     } catch (err) {
+      console.error("Enrollment Error:", err);
       showAlert('Registration failed. ' + (err.response?.data?.message || 'Server error.'));
     } finally {
       setIsSubmitting(false);

@@ -7,24 +7,28 @@ const fs = require('fs');
 const bcrypt = require('bcrypt'); 
 require('dotenv').config();
 
-// ✅ IMPORTS (Updated paths for 'src' folder)
-const { db } = require('./config/db'); // Import our new DB instance
+// ✅ IMPORTS
+const { db } = require('./config/db'); 
 const validate = require('./middleware/validateResources');
 const { loginSchema } = require('./schemas/authSchemas'); 
 
 // ✅ ROUTES
 const enrollRoutes = require('./routes/enroll.routes');
 const adminRoutes = require('./routes/admin.routes');
+const studentRoutes = require('./routes/student.routes'); // Added student routes
 
 const app = express();
+const isProd = process.env.NODE_ENV === 'production';
 
-// ✅ CORS
+// ✅ CORS (Only one config, strictly using the allowlist)
 app.use(cors({
   origin: [
     "http://localhost:3000", 
     "http://localhost:5173", 
     "https://mediumpurple-turtle-960137.hostingersite.com",
-    "https://www.mediumpurple-turtle-960137.hostingersite.com"
+    "https://www.mediumpurple-turtle-960137.hostingersite.com",
+    "https://croupiertraining.sgwebworks.com",
+    "https://www.croupiertraining.sgwebworks.com"
   ],
   credentials: true
 }));
@@ -41,31 +45,25 @@ app.use((req, res, next) => {
 });
 
 // ✅ DEPENDENCY INJECTION
-// We inject the 'db' from config/db.js into every request
 app.use((req, res, next) => {
     req.db = db;
     next();
 });
 
-// ✅ FILE STORAGE SETUP
-// Adjusted path to go UP one level to root 'server/secure_uploads'
-const uploadDir = path.join(__dirname, '../secure_uploads');
+// ✅ FILE STORAGE SETUP (Production safe path)
+const uploadDir = path.join(process.cwd(), "secure_uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
 
 // ==========================================
 //           ⚡️ ROUTES
 // ==========================================
-
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/admin', adminRoutes);
-
+app.use('/api/student', studentRoutes); // Mounted student routes
 
 // ==========================================
 //           🔐 AUTH LOGIC
 // ==========================================
-// (Kept inline as requested to preserve functionality)
-
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '4h';
 
@@ -81,14 +79,17 @@ app.post('/api/admin/login', validate(loginSchema), (req, res) => {
         
         if (match) {
             const token = jwt.sign({ isAdmin: true, username: adminUser.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-res.cookie('admin_token', token, {
-  httpOnly: true,
-  secure: false,
-  sameSite: 'lax',
-  maxAge: 4 * 60 * 60 * 1000
-});
+            
+            // ✅ Fixed cookie name to 'token' and added environment-aware security
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: isProd, 
+                sameSite: isProd ? 'none' : 'lax',
+                maxAge: 4 * 60 * 60 * 1000
+            });
 
-            res.status(200).json({ success: true });
+            // ✅ Added token in response for frontend localStorage 
+            res.status(200).json({ success: true, token, user: { isAdmin: true, username: adminUser.username } });
         } else {
             res.status(401).json({ success: false, message: "Invalid Credentials" });
         }
@@ -97,14 +98,25 @@ res.cookie('admin_token', token, {
 
 // LOGOUT
 app.post('/api/logout', (req, res) => {
-    res.clearCookie('token', { httpOnly: true, secure: false, sameSite: 'lax' });
+    res.clearCookie('token', { 
+        httpOnly: true, 
+        secure: isProd, 
+        sameSite: isProd ? 'none' : 'lax' 
+    });
     res.json({ message: 'Logged out' });
 });
 
 // CHECK AUTH (ME)
 app.get('/api/me', (req, res) => {
-    const token = req.cookies.token;
+    // ✅ Support for cookie token OR header authorization
+    let token = req.cookies.token;
+    
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
     if (!token) return res.status(401).send({ message: 'Not authenticated' });
+    
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         if (decoded.isAdmin) return res.status(200).send({ user: { isAdmin: true, username: decoded.username } });

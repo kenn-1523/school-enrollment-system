@@ -6,12 +6,15 @@ import {
     X, Save, Bold, Italic, List, Type, ListOrdered, Undo, 
     Layout, HelpCircle, ChevronRight, Plus, Trash2, Upload, FileSpreadsheet, Download, AlertCircle, Video 
 } from 'lucide-react';
-import CustomAlert from '../CustomAlert'; // ✅ Make sure this path points to where you saved CustomAlert.jsx
+import CustomAlert from '../CustomAlert'; 
 
-// API Configuration
-const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-  ? 'http://localhost:3001/api' 
-  : 'https://mediumpurple-turtle-960137.hostingersite.com/backend_api/api';
+// ✅ PATCH ONLY: UNIVERSAL API CONFIGURATION (LOCAL + DEPLOY SAFE)
+// - Local .env.local: NEXT_PUBLIC_API_URL=http://localhost:3001
+// - Prod:            NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
+// - Prod subpath:    NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com/backend_api
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
+const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 // --- 0. CUSTOM SCROLLBAR STYLE ---
 const scrollbarStyles = `
@@ -104,7 +107,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
   // ✅ ALERT STATE
   const [alert, setAlert] = useState({
     isOpen: false,
-    type: 'success', // 'success', 'error', 'danger'
+    type: 'success', 
     title: '',
     message: '',
     onConfirm: null,
@@ -114,7 +117,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
 
   const fileInputRef = useRef(null);
 
-  // Helper to show alerts
   const showAlert = (type, title, message, onConfirm = null, confirmText = 'Okay', cancelText = 'Cancel') => {
     setAlert({ isOpen: true, type, title, message, onConfirm, confirmText, cancelText });
   };
@@ -138,10 +140,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
             })
             .catch(err => {
                 console.error("Failed to load content", err);
-                if(err.response && err.response.status === 401) {
-                    // You can use showAlert here if you want
-                    // showAlert('error', 'Session Expired', 'Please log in again.');
-                }
                 setLoading(false);
             });
     }
@@ -195,7 +193,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
 
       try {
           await axios.put(`${API_URL}/admin/lessons/${lessonToSave.id}`, payload, { withCredentials: true });
-          // ✅ REPLACED ALERT WITH CUSTOM POPUP
           showAlert('success', 'Saved!', 'Lesson details updated successfully.', closeAlert);
       } catch (err) {
           console.error("Save Lesson Error:", err);
@@ -240,13 +237,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           
           if (res.data.success) {
               const newLesson = { ...res.data.lesson, quizzes: [] };
-              if (!res.data.lesson && res.data.lessonId) {
-                  newLesson.id = res.data.lessonId;
-                  newLesson.title = payload.title;
-                  newLesson.content = payload.content;
-                  newLesson.duration = payload.duration;
-              }
-
               setLessons([...lessons, newLesson]);
               setActiveLessonId(newLesson.id);
           }
@@ -258,11 +248,9 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       }
   };
 
-  // --- ✅ HANDLER: DELETE LESSON (With Custom Alert) ---
   const handleDeleteLesson = () => {
       if (!activeLessonId) return;
 
-      // ✅ REPLACED confirm() with showAlert with callback
       showAlert(
           'danger', 
           'Delete Lesson?', 
@@ -270,16 +258,14 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           async () => {
               try {
                   await axios.delete(`${API_URL}/admin/lessons/${activeLessonId}`, { withCredentials: true });
-                  
                   const updatedLessons = lessons.filter(l => l.id !== activeLessonId);
                   setLessons(updatedLessons);
-                  
                   if (updatedLessons.length > 0) {
                       setActiveLessonId(updatedLessons[0].id);
                   } else {
                       setActiveLessonId(null);
                   }
-                  closeAlert(); // Close the confirmation modal
+                  closeAlert();
               } catch (err) {
                   console.error("Delete Lesson Error:", err);
                   showAlert('error', 'Error', 'Failed to delete lesson.', closeAlert);
@@ -322,7 +308,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
   };
 
   const handleDeleteQuiz = (quizId) => {
-      // ✅ REPLACED confirm() with Custom Alert
       showAlert(
           'danger', 
           'Delete Question?', 
@@ -344,7 +329,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       );
   };
 
-  // --- CSV / EXCEL TEMPLATE DOWNLOADER ---
   const handleDownloadTemplate = () => {
       const csvContent = "data:text/csv;charset=utf-8," 
           + "Question,Option A,Option B,Option C,Option D,Correct Answer\n"
@@ -360,7 +344,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       document.body.removeChild(link);
   };
 
-  // --- CSV FILE HANDLER ---
   const handleFileUpload = (event) => {
       const file = event.target.files[0];
       if (!file) return;
@@ -375,14 +358,11 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           try {
               const text = e.target.result;
               const rows = text.split('\n').filter(row => row.trim() !== '');
-              
               const dataRows = rows.slice(1); 
               
               const quizzes = dataRows.map(row => {
                   const cols = row.split(',').map(c => c.trim());
-                  
                   if (cols.length < 6) return null;
-
                   return {
                       question: cols[0],
                       options: [cols[1], cols[2], cols[3], cols[4]],
@@ -416,7 +396,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <style>{scrollbarStyles}</style>
 
-      {/* ✅ RENDER CUSTOM ALERT */}
       <CustomAlert 
         isOpen={alert.isOpen}
         type={alert.type}
@@ -458,7 +437,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                 ))}
             </div>
 
-            {/* ADD LESSON BUTTON */}
             <div className="p-4 border-t border-slate-700 bg-[#0f172a]">
                 <button 
                     onClick={handleAddLesson}
@@ -472,7 +450,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
 
         {/* --- RIGHT CONTENT: EDITOR --- */}
         <div className="flex-1 flex flex-col bg-[#1e293b]">
-            {/* Header */}
             <div className="h-20 border-b border-slate-700 flex items-center justify-between px-8 bg-[#1e293b]">
                 <div>
                     <h3 className="text-slate-200 font-bold flex items-center gap-2 text-lg">
@@ -486,12 +463,10 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                 </button>
             </div>
 
-            {/* Editor Area */}
             <div className="flex-1 overflow-y-auto p-8 custom-scroll">
                 {activeLesson ? (
                     <div className="max-w-4xl mx-auto space-y-8 pb-10">
                         
-                        {/* Title & Duration */}
                         <div className="grid grid-cols-2 gap-6">
                             <div className="col-span-2 md:col-span-1">
                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Lesson Title</label>
@@ -511,7 +486,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                             </div>
                         </div>
 
-                        {/* ✅ VIDEO URL INPUT */}
                         <div>
                             <label className="block text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-2">
                                 <Video size={14}/> Video URL
@@ -524,7 +498,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                             />
                         </div>
 
-                        {/* Visual Editor */}
                         <div>
                             <div className="flex justify-between items-end mb-2">
                                 <label className="block text-xs font-bold text-slate-500 uppercase">Lesson Content</label>
@@ -537,7 +510,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                             />
                         </div>
 
-                        {/* Quizzes Section */}
                         <div className="border-t border-slate-700 pt-8">
                             <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
                                 <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
@@ -548,7 +520,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                                     <button 
                                         onClick={handleDownloadTemplate}
                                         className="px-3 py-1.5 rounded bg-slate-700 text-slate-300 border border-slate-600 hover:bg-slate-600 text-xs font-bold flex items-center gap-2 transition-all"
-                                        title="Download Excel Template"
                                     >
                                         <Download size={14}/> Template
                                     </button>
@@ -589,7 +560,6 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                                             <button 
                                                 onClick={() => handleDeleteQuiz(quiz.id)}
                                                 className="absolute top-4 right-4 p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors opacity-0 group-hover:opacity-100"
-                                                title="Delete Question"
                                             >
                                                 <Trash2 size={16}/>
                                             </button>
@@ -654,15 +624,11 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
                 )}
             </div>
 
-            {/* Footer Actions */}
             {activeLesson && (
                 <div className="p-6 border-t border-slate-700 bg-[#0f172a] flex justify-between items-center">
-                    
-                    {/* ✅ DELETE BUTTON (Calls Custom Alert) */}
                     <button 
                         onClick={handleDeleteLesson}
                         className="px-4 py-2.5 rounded-lg border border-red-900/30 text-red-500 hover:bg-red-900/20 font-bold text-sm transition-colors flex items-center gap-2"
-                        title="Delete this lesson"
                     >
                         <Trash2 size={18} />
                         <span className="hidden sm:inline">Delete Lesson</span>

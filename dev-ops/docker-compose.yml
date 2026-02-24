@@ -1,7 +1,7 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # 1. The Database (MariaDB)
+  # 1) Database (MariaDB)
   db:
     image: mariadb:10.6
     restart: always
@@ -13,31 +13,40 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
-  # 2. The Backend Server
+  # 2) Backend Server (Express)
   server:
     build:
       context: ../../
       dockerfile: dev-ops/docker/server.Dockerfile
+    restart: always
     ports:
       - "5000:5000"
     environment:
       PORT: 5000
-      DB_HOST: db  # "db" matches the service name above!
+      DB_HOST: db
       DB_USER: root
       DB_PASSWORD: root
       DB_NAME: elite_croupier_db
+      # add if needed:
+      # JWT_SECRET: your_secret
+      # NODE_ENV: production
     depends_on:
       - db
 
-  # 3. The Frontend Client
+  # 3) Frontend (Next.js)
   client:
     build:
       context: ../../
       dockerfile: dev-ops/docker/client.Dockerfile
+    restart: always
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:5000
+      # ✅ IMPORTANT: This is the backend target INSIDE docker network
+      NEXT_PUBLIC_API_PROXY_TARGET: http://server:5000
+
+      # optional (only if you still use NEXT_PUBLIC_API_URL in some files)
+      # NEXT_PUBLIC_API_URL: http://server:5000
     depends_on:
       - server
 
