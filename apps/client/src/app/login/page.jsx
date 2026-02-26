@@ -1,10 +1,15 @@
-import LoginPage from '../../features/auth/LoginPage';
-
-export const metadata = {
-  title: 'Login - School System',
-  description: 'Access your student or admin dashboard.',
-};
-
-export default function Page() {
-  return <LoginPage />;
+export default function LoginRedirectPage() {
+  return (
+    <html>
+      <head>
+        <meta httpEquiv="refresh" content="0; url=/student/login" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "window.location.replace('/student/login');",
+          }}
+        />
+      </head>
+      <body />
+    </html>
+  );
 }

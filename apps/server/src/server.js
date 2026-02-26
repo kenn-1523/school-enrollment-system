@@ -116,8 +116,9 @@ const corsOptions = isProd
     };
 
 app.use(cors(corsOptions));
-// Ensure preflight OPTIONS are handled with the same options
-app.options('*', cors(corsOptions));
+// explicit OPTIONS preflight handled by cors middleware above;
+// remove app.options wildcard to avoid path-to-regexp errors
+
 
 // ==========================================
 // 3) MIDDLEWARE
