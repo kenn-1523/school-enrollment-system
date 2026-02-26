@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import {
   X,
   PlayCircle,
@@ -24,24 +24,14 @@ import { useTheme } from '../../context/ThemeContext';
 
 /**
  * ✅ ENV STRATEGY
- * Local dev (client .env.local):
- *   NEXT_PUBLIC_API_URL=http://localhost:3001
  *
- * Production env:
- *   NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
+ * Configure the API base via environment variable:
+ *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
  *
  * IMPORTANT:
  * - use string fallback in quotes
  * - normalize trailing slash
  */
-const RAW_API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://croupiertraining.sgwebworks.com';
-
-function normalizeBaseUrl(url) {
-  if (!url) return '';
-  return url.replace(/\/+$/, '');
-}
-
 export default function StudentCourseModal({ course, isOpen, onClose }) {
   // --- STATE ---
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
@@ -66,8 +56,7 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [showCheatingWarning, setShowCheatingWarning] = useState(false);
 
-  // --- API BASE ---
-  const API_URL = useMemo(() => normalizeBaseUrl(RAW_API_URL), []);
+  // API calls use centralized `api` client
 
   // --- THEME SAFEGUARD ---
   let isDarkMode = true;
@@ -251,14 +240,13 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
     }
 
     try {
-      const response = await axios.post(
-        `${API_URL}/api/student/quiz/submit`,
+      const response = await api.post(
+        '/student/quiz/submit',
         {
           lessonId: activeLesson.id,
           answers: quizAnswers
         },
         {
-          withCredentials: true,
           headers: { 'Content-Type': 'application/json' },
           timeout: 20000
         }

@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { Search, CheckCircle, XCircle, FileText } from 'lucide-react';
 
-// Keep this consistent with AdminDashboard.jsx
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+// Use centralized API client
 
 export default function ApplicationsTable({ data, loading, searchQuery, setSearchQuery, refreshData, triggerAlert, onRowClick }) {
 
@@ -13,7 +12,7 @@ export default function ApplicationsTable({ data, loading, searchQuery, setSearc
     e.stopPropagation();
     triggerAlert('success', 'Approve Application', 'Are you sure you want to approve this student?', 'Approve', async () => {
       try {
-        await axios.post(`${API_URL}/api/admin/approve`, { studentId: id }, { withCredentials: true });
+        await api.post('/admin/approve', { studentId: id });
         refreshData();
       } catch (err) { alert("Error approving"); }
     });
@@ -23,7 +22,7 @@ export default function ApplicationsTable({ data, loading, searchQuery, setSearc
     e.stopPropagation();
     triggerAlert('warning', 'Reject Application', 'This will reject the application. Continue?', 'Reject', async () => {
       try {
-        await axios.post(`${API_URL}/api/admin/reject`, { studentId: id }, { withCredentials: true });
+        await api.post('/admin/reject', { studentId: id });
         refreshData();
       } catch (err) { alert("Error rejecting"); }
     });

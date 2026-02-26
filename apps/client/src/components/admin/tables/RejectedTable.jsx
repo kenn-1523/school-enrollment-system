@@ -1,11 +1,10 @@
 'use client';
 
 import React from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { Search, Undo2, Ban } from 'lucide-react';
 
-// Keep this consistent with AdminDashboard.jsx
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000');
+
 
 export default function RejectedTable({ data, loading, searchQuery, setSearchQuery, refreshData, triggerAlert, onRowClick }) {
 
@@ -13,7 +12,7 @@ export default function RejectedTable({ data, loading, searchQuery, setSearchQue
     e.stopPropagation();
     triggerAlert('info', 'Restore Application', 'Move this application back to Pending?', 'Restore', async () => {
       try {
-        await axios.post(`${API_URL}/api/admin/restore`, { studentId: id }, { withCredentials: true });
+        await api.post('/admin/restore', { studentId: id });
         refreshData();
       } catch (err) { alert("Error restoring"); }
     });

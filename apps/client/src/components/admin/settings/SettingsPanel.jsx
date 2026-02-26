@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { Lock, Save } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
 // ✅ FIXED: Added quotes around the URL string so the build doesn't crash
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://croupiertraining.sgwebworks.com";
+// centralized API client
 
 export default function SettingsPanel({ triggerAlert }) {
   // NOTE: your AuthContext might expose different keys (user/admin).
@@ -65,9 +65,7 @@ export default function SettingsPanel({ triggerAlert }) {
             currentPassword: form.currentPassword
           };
 
-          await axios.put(`${API_URL}/api/admin/update-profile`, payload, {
-            withCredentials: true
-          });
+          await api.put('/admin/update-profile', payload);
 
           // backend says you will be logged out after change — do it here
           if (typeof logout === 'function') logout();

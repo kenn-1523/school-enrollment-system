@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, useMemo } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sun, Moon, X, FileText, ExternalLink, Mail, Phone, Calendar, GraduationCap, Briefcase, MapPin, BookOpen, ChevronDown, ListChecks } from 'lucide-react';
 
@@ -17,7 +17,7 @@ import SettingsPanel from '../../components/admin/settings/SettingsPanel';
 
 import './AdminDashboard.css';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
 
 const formatDate = (isoString) => {
   if (!isoString) return 'N/A';
@@ -60,20 +60,12 @@ const fetchStudents = async () => {
       localStorage.getItem("adminToken");
 
     if (!token) {
-      console.warn("No auth token found.");
+      console.warn('No auth token found.');
       setStudents([]);
       return;
     }
 
-    const res = await axios.get(
-      `${API_URL}/api/admin/students?limit=1000`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      }
-    );
+    const res = await api.get('/admin/students?limit=1000');
 
     console.log("Students API response:", res.data);
 
@@ -98,7 +90,7 @@ const fetchStudents = async () => {
   const fetchEnrolledProgress = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/score-report`, { withCredentials: true });
+      const res = await api.get('/admin/score-report');
       setEnrolledProgress(res.data || []);
     } catch (err) {
       console.error("Fetch score report error:", err);
@@ -169,7 +161,11 @@ const fetchStudents = async () => {
     setViewMode('progress');
   };
 
-  const getFileUrl = (filename) => `${API_URL}/api/secure-file/${filename}`;
+  const getFileUrl = (filename) => {
+    const raw = process.env.NEXT_PUBLIC_API_URL || '';
+    const cleaned = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
+    return `${cleaned}/api/secure-file/${filename}`;
+  };
 
   // Filters
   const filteredStudents = students.filter(s =>

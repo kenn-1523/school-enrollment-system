@@ -41,6 +41,10 @@ if (missingEnvVars.length > 0) {
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const isProd = NODE_ENV === 'production';
 
+if (!process.env.NODE_ENV) {
+  console.warn("⚠ WARNING: NODE_ENV not set. Defaulting to development.");
+}
+
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '4h';
 
@@ -54,6 +58,19 @@ const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 const app = express();
 
 // ==========================================
+// Trust Hostinger / proxy so secure cookies are set correctly
+app.set('trust proxy', 1);
+// ==========================================
+
+// Enforce HTTPS in production (behind proxy)
+if (isProd) {
+  app.use((req, res, next) => {
+    if (!req.secure && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, 'https://' + req.headers.host + req.url);
+    }
+    next();
+  });
+}
 // 2) CORS (credentials-safe)
 // ==========================================
 const allowedOrigins = [
@@ -65,32 +82,50 @@ const allowedOrigins = [
   'https://www.mediumpurple-turtle-960137.hostingersite.com'
 ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // allow requests with no origin (Postman/server-to-server)
-      if (!origin) return callback(null, true);
+// ==========================================
+// 2) CORS (production-safe)
+// ==========================================
+const FRONTEND_ORIGIN = 'https://croupiertraining.sgwebworks.com';
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
+const corsOptions = isProd
+  ? {
+      origin: FRONTEND_ORIGIN, // exact origin only
+      credentials: true,       // allow cookies
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+    }
+  : {
+      // Development-friendly: allow localhost and configured hostinger preview origins
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const devAllow = [
+          'http://localhost:3000',
+          'http://localhost:5173',
+          'https://mediumpurple-turtle-960137.hostingersite.com',
+          'https://www.mediumpurple-turtle-960137.hostingersite.com',
+          'https://croupiertraining.sgwebworks.com',
+          'https://www.croupiertraining.sgwebworks.com'
+        ];
+        if (devAllow.includes(origin)) return callback(null, true);
         console.warn(`⚠️ CORS blocked for origin: ${origin}`);
         return callback(new Error(`CORS blocked for origin: ${origin}`));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-    optionsSuccessStatus: 200
-  })
-);
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+    };
+
+app.use(cors(corsOptions));
+// Ensure preflight OPTIONS are handled with the same options
+app.options('*', cors(corsOptions));
 
 // ==========================================
 // 3) MIDDLEWARE
 // ==========================================
+// Ensure cookieParser runs before body parsers so auth middleware can read cookies early
+app.use(cookieParser());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 // Dependency Injection
 app.use((req, res, next) => {
@@ -111,10 +146,11 @@ app.use('/api/student', studentRoutes);
 function authCookieOptions() {
   return {
     httpOnly: true,
-    secure: isProd, // true on HTTPS prod
-    sameSite: isProd ? 'none' : 'lax', // required for cross-site cookies in prod
-    maxAge: 4 * 60 * 60 * 1000, // 4 hours
-    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {})
+    secure: true, // production: must be HTTPS
+    sameSite: 'None', // allow cross-site cookies
+    domain: '.sgwebworks.com', // share across croupiertraining.sgwebworks.com and api-croupiertraining.sgwebworks.com
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/'
   };
 }
 
@@ -226,14 +262,10 @@ app.get('/api/me', (req, res) => {
  * POST /api/logout
  */
 app.post('/api/logout', (req, res) => {
-  const opts = {
-    ...authCookieOptions(),
-    maxAge: undefined
-  };
-
-  res.clearCookie(AUTH_COOKIE_NAME, opts);
-  res.clearCookie('admin_token', opts);
-  res.clearCookie('student_token', opts);
+  const clearOpts = { ...authCookieOptions(), maxAge: 0 };
+  res.clearCookie(AUTH_COOKIE_NAME, clearOpts);
+  res.clearCookie('admin_token', clearOpts);
+  res.clearCookie('student_token', clearOpts);
 
   return res.status(200).json({ message: 'Logged out' });
 });
@@ -273,7 +305,8 @@ app.get('/api/health', (req, res) => {
   return res.status(200).json({
     ok: true,
     env: NODE_ENV,
-    time: new Date().toISOString()
+    time: new Date().toISOString(),
+    db: db.dbHealthy ? 'connected' : 'error'
   });
 });
 

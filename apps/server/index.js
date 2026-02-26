@@ -61,6 +61,19 @@ const isProd = NODE_ENV === 'production';
 // ==========================================
 const app = express();
 
+// Trust Hostinger / proxy so secure cookies are set correctly
+app.set('trust proxy', 1);
+
+// Enforce HTTPS in production (behind proxy)
+if (isProd) {
+  app.use((req, res, next) => {
+    if (!req.secure && req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, 'https://' + req.headers.host + req.url);
+    }
+    next();
+  });
+}
+
 // ==========================================
 //           ✅ CORS (SAFE + WORKS EVERYWHERE)
 // ==========================================
@@ -71,7 +84,6 @@ const allowedOrigins = [
   'http://localhost:5173',
   'https://croupiertraining.sgwebworks.com',
   'https://www.croupiertraining.sgwebworks.com',
-  'https://mediumpurple-turtle-960137.hostingersite.com'
 ];
 
 // Dynamic origin check (best practice for credentials)
@@ -100,8 +112,9 @@ app.options('*', cors());
 // ==========================================
 //           ✅ MIDDLEWARES
 // ==========================================
-app.use(express.json({ limit: '2mb' }));
+// Ensure cookieParser runs before body parsers so auth middleware can read cookies early
 app.use(cookieParser());
+app.use(express.json({ limit: '2mb' }));
 
 // ✅ DEPENDENCY INJECTION
 app.use((req, res, next) => {
@@ -129,10 +142,11 @@ const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 function cookieOptions() {
   return {
     httpOnly: true,
-    secure: isProd, // MUST be true in HTTPS production for SameSite=None
-    sameSite: isProd ? 'none' : 'lax',
-    maxAge: 4 * 60 * 60 * 1000, // 4 hours
-    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {})
+    secure: true,
+    sameSite: 'None',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    domain: '.sgwebworks.com',
+    path: '/'
   };
 }
 
@@ -282,8 +296,5 @@ app.get('/api/health', (req, res) => {
 //           ✅ START SERVER
 // ==========================================
 const PORT = Number(process.env.PORT) || 3001;
-
-app.listen(PORT, () => {
-  console.log(`🚀 SERVER RUNNING ON PORT ${PORT} [Mode: ${isProd ? 'Production' : 'Development'}]`);
-  console.log('✅ Active Routes: /api/me, /api/logout, /api/admin/login, /api/admin, /api/student, /api/enroll');
-});
+// app.listen removed from this file to ensure only src/server.js starts the server
+// If you need to run this file directly, start the server explicitly via src/server.js

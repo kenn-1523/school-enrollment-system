@@ -1,10 +1,10 @@
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 
 /**
  * ✅ WORKS LOCALLY + DEPLOYED (Best practice)
  *
  * Local (apps/client/.env.local):
- *   NEXT_PUBLIC_API_URL=http://localhost:3001
+ *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
  *
  * Production (hosting env):
  *   NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
@@ -21,27 +21,10 @@ import axios from 'axios';
  * NOTE: uses cookies -> withCredentials: true
  */
 
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-function normalizeBaseUrl(url) {
-  if (!url) return '';
-  // remove trailing slashes
-  return url.replace(/\/+$/, '');
-}
-
-function buildApiBase(baseUrl) {
-  // If baseUrl already ends with /api, keep it. Otherwise append /api
-  const normalized = normalizeBaseUrl(baseUrl);
-  if (!normalized) return '';
-  if (normalized.endsWith('/api')) return normalized;
-  return `${normalized}/api`;
-}
-
-const BASE_URL = normalizeBaseUrl(RAW_BASE_URL);
-const API_URL = buildApiBase(BASE_URL);
-
-// Optional: make axios a bit more stable / consistent
-axios.defaults.withCredentials = true;
+// Uses centralized `api` instance. Endpoints:
+// POST /admin/login
+// POST /student/login
+// POST /logout
 
 /**
  * Helper to format error consistently
@@ -67,15 +50,7 @@ function toReadableError(error) {
  */
 export const login = async (username, password) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/admin/login`,
-      { username, password },
-      {
-        withCredentials: true,
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 20000
-      }
-    );
+    const response = await api.post('/admin/login', { username, password }, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
 
     // Save admin user to localStorage
     if (typeof window !== 'undefined' && response?.data?.user) {
@@ -96,15 +71,7 @@ export const login = async (username, password) => {
  */
 export const loginStudent = async (username, password) => {
   try {
-    const response = await axios.post(
-      `${API_URL}/student/login`,
-      { username, password },
-      {
-        withCredentials: true,
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 20000
-      }
-    );
+    const response = await api.post('/student/login', { username, password }, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
 
     // Save student user to localStorage
     if (typeof window !== 'undefined' && response?.data?.user) {
@@ -125,15 +92,7 @@ export const loginStudent = async (username, password) => {
  */
 export const logout = async () => {
   try {
-    await axios.post(
-      `${API_URL}/logout`,
-      {},
-      {
-        withCredentials: true,
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 20000
-      }
-    );
+    await api.post('/logout', {}, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
   } catch (err) {
     console.error('Logout error:', err);
   } finally {
@@ -148,4 +107,4 @@ export const logout = async () => {
 /**
  * Optional: export API_URL for debugging (remove if you want)
  */
-export const __API_URL__ = API_URL;
+// NOTE: API base URL is controlled by NEXT_PUBLIC_API_URL and centralized in src/lib/apiClient.js

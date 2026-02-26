@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
@@ -10,32 +10,21 @@ import { useAuth } from '../../context/AuthContext';
 import './AdminLogin.css';
 
 /**
- * ✅ Works BOTH locally and deployed using env var
+ * ✅ API configuration
  *
- * Local (apps/client/.env.local):
- *   NEXT_PUBLIC_API_URL=http://localhost:3001
- *
- * Production (hosting env):
- *   NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
+ * Configure the API base with the environment variable:
+ *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
  *
  * NOTE:
  * - This component uses cookies (withCredentials: true)
  * - Backend must allow CORS credentials if cross-origin
  */
 
-const RAW_API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-function normalizeBaseUrl(url) {
-  if (!url) return '';
-  return url.replace(/\/+$/, '');
-}
-
 const LoginPage = () => {
   const router = useRouter();
   const { adminLogin, isAdmin, loading } = useAuth();
 
-  const API_BASE_URL = useMemo(() => normalizeBaseUrl(RAW_API_URL), []);
+  // centralized API client: `api`
 
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [status, setStatus] = useState({ loading: false, error: '' });
@@ -61,18 +50,7 @@ const LoginPage = () => {
     setStatus({ loading: true, error: '' });
 
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/admin/login`,
-        {
-          username: formData.username,
-          password: formData.password
-        },
-        {
-          withCredentials: true,
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 20000
-        }
-      );
+      await api.post('/admin/login', { username: formData.username, password: formData.password }, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
 
       // Success - show modal
       setStatus({ loading: false, error: '' });
@@ -229,10 +207,7 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* Optional small debug: remove if you don't want it */}
-          <div style={{ marginTop: '14px', fontSize: '10px', color: '#64748b' }}>
-            API: {API_BASE_URL}
-          </div>
+
         </div>
       </div>
 

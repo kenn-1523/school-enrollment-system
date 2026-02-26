@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { Edit } from 'lucide-react';
 
 // ✅ CORRECT PATHS
@@ -16,10 +16,7 @@ const layoutStyle = {
   color: '#e2e8f0',
 };
 
-// ✅ FIX: Make API_URL always end with "/api" (works local + deployed)
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
-const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
+// API calls use centralized `api` from src/lib/apiClient
 
 export default function AdminCoursesPage() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -33,9 +30,7 @@ export default function AdminCoursesPage() {
     const fetchData = async () => {
       try {
         // ✅ FIXED PATH: /api/admin/courses
-        const res = await axios.get(`${API_URL}/admin/courses`, {
-          withCredentials: true,
-        });
+        const res = await api.get('/admin/courses');
 
         if (res.data && res.data.success) {
           setCourses(res.data.courses || []);

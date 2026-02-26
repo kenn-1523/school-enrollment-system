@@ -1,15 +1,10 @@
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 
 /**
  * ✅ GLOBAL API CONFIGURATION
  * Safely formats the base URL to ensure it always ends with /api
  */
-const RAW = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const BASE = RAW.replace(/\/+$/, '');
-const API_BASE = BASE.endsWith('/api') ? BASE : `${BASE}/api`;
-
-// Append the specific route for enrollment
-const ENROLL_API_URL = `${API_BASE}/enroll`;
+// Use centralized `api` for network calls. Endpoint: POST /enroll
 
 /**
  * 📝 SUBMIT ENROLLMENT
@@ -43,12 +38,11 @@ export const submitEnrollment = async (formData, idFile, birthCertFile) => {
         }
 
         // 3. Send the request
-        const response = await axios.post(ENROLL_API_URL, payload, {            
-            headers: { 
-                'Content-Type': 'multipart/form-data' 
-            },
-            withCredentials: true, // Necessary for session tracking/cookies
-        });        
+        const response = await api.post('/enroll', payload, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         
         // Return the server response (e.g., the enrollment ID)
         return response.data;    

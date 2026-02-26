@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 
 const AuthContext = createContext({
   user: null,
@@ -14,25 +14,13 @@ const AuthContext = createContext({
 /**
  * ✅ ENV STRATEGY (BEST PRACTICE)
  *
- * Local (.env.local):
- *   NEXT_PUBLIC_API_URL=http://localhost:3001
+ * Set the frontend API base URL via environment variable:
+ *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
  *
- * Production (hosting panel):
- *   NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
- *
- * DO NOT hardcode URLs in components.
+ * Do not hardcode local development URLs in production code.
  */
 
-const RAW_API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-function normalizeBaseUrl(url) {
-  if (!url) return '';
-  return url.replace(/\/+$/, '');
-}
-
 export const AuthProvider = ({ children }) => {
-  const API_BASE_URL = useMemo(() => normalizeBaseUrl(RAW_API_URL), []);
 
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -48,20 +36,11 @@ export const AuthProvider = ({ children }) => {
 
   const checkUser = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/me`, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        timeout: 15000
-      });
+      const res = await api.get('/me', { timeout: 15000 });
 
       if (res.status === 200 && res.data?.user) {
         const currentUser = res.data.user;
-
         setUser(currentUser);
-
-        // Admin detection logic
         if (currentUser.isAdmin === true || currentUser.role === 'admin' || currentUser.username === 'admin') {
           setIsAdmin(true);
         } else {
@@ -72,7 +51,6 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(false);
       }
     } catch (error) {
-      // Network error / expired session
       setUser(null);
       setIsAdmin(false);
     } finally {
@@ -92,16 +70,7 @@ export const AuthProvider = ({ children }) => {
   // ---------------------------
   const logout = async () => {
     try {
-      await axios.post(
-        `${API_BASE_URL}/api/logout`,
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      await api.post('/logout', {}, { timeout: 10000 });
     } catch (err) {
       console.error('Logout error:', err);
     } finally {

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation'; // Updated for Next.js app router
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { useAuth } from '../../context/AuthContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// Use centralized API client
 
 const UserSettings = () => {
   const router = useRouter();
@@ -18,7 +18,7 @@ const UserSettings = () => {
     const parsed = auth.user;
     const id = parsed.id || parsed.student_id;
     
-    axios.get(`${API_URL}/api/student/${id}`, { withCredentials: true })
+    api.get(`/student/${id}`)
       .then(res => {
         setUser(res.data);
         setLoading(false);
@@ -53,7 +53,7 @@ const UserSettings = () => {
       employment_status: user.employment_status
     };
 
-    axios.put(`${API_URL}/api/student/${id}`, payload, { withCredentials: true })
+    api.put(`/student/${id}`, payload)
       .then(res => {
         setSaving(false);
         const p = auth.user ? { ...auth.user, firstName: user.first_name } : null;

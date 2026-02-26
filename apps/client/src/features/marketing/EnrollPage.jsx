@@ -1,6 +1,6 @@
 'use client';
 
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -284,8 +284,8 @@ const EnrollPage = () => {
     if (formData.idFile) subData.append('idFile', formData.idFile);
     if (formData.birthCertFile) subData.append('birthCertFile', formData.birthCertFile);
 try {
-      // Use the dynamic API_URL instead of the hardcoded localhost
-      const res = await axios.post(`${API_URL}/enroll`, subData, { 
+      // Use the centralized `api` client for network calls
+      const res = await api.post('/enroll', subData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setSuccessData({ id: res.data.id || 'Pending' });

@@ -126,15 +126,4 @@ app.get('/api/me', (req, res) => {
     }
 });
 
-// ADMIN SETUP
-app.get('/api/setup-admin', async (req, res) => {
-    const username = "admin"; 
-    const password = "admin123"; 
-    const hash = await bcrypt.hash(password, 10);
-    db.query("INSERT INTO admins (username, password_hash) VALUES (?, ?)", [username, hash], (err) => {
-        if(err) return res.json({ error: err.message });
-        res.json({ message: "Admin Created!" });
-    });
-});
-
 module.exports = app;

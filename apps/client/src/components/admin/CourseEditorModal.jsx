@@ -1,20 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { 
     X, Save, Bold, Italic, List, Type, ListOrdered, Undo, 
     Layout, HelpCircle, ChevronRight, Plus, Trash2, Upload, FileSpreadsheet, Download, AlertCircle, Video 
 } from 'lucide-react';
 import CustomAlert from '../CustomAlert'; 
 
-// ✅ PATCH ONLY: UNIVERSAL API CONFIGURATION (LOCAL + DEPLOY SAFE)
-// - Local .env.local: NEXT_PUBLIC_API_URL=http://localhost:3001
-// - Prod:            NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com
-// - Prod subpath:    NEXT_PUBLIC_API_URL=https://croupiertraining.sgwebworks.com/backend_api
-const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
-const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
+// Use centralized API client `api` (configured in src/lib/apiClient.js)
 
 // --- 0. CUSTOM SCROLLBAR STYLE ---
 const scrollbarStyles = `
@@ -129,7 +123,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
   useEffect(() => {
     if (isOpen && courseCode) {
         setLoading(true);
-        axios.get(`${API_URL}/admin/courses/${courseCode}/content`, { withCredentials: true })
+        api.get(`/admin/courses/${courseCode}/content`)
             .then(res => {
                 const loadedLessons = res.data.content || []; 
                 setLessons(loadedLessons);
@@ -192,7 +186,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       };
 
       try {
-          await axios.put(`${API_URL}/admin/lessons/${lessonToSave.id}`, payload, { withCredentials: true });
+          await api.put(`/admin/lessons/${lessonToSave.id}`, payload);
           showAlert('success', 'Saved!', 'Lesson details updated successfully.', closeAlert);
       } catch (err) {
           console.error("Save Lesson Error:", err);
@@ -213,7 +207,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       };
 
       try {
-          await axios.put(`${API_URL}/admin/quizzes/${quiz.id}`, payload, { withCredentials: true });
+          await api.put(`/admin/quizzes/${quiz.id}`, payload);
           showAlert('success', 'Saved!', 'Quiz question updated.', closeAlert);
       } catch (err) {
           showAlert('error', 'Error', 'Failed to save quiz.', closeAlert);
@@ -233,7 +227,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
               video_url: null
           };
           
-          const res = await axios.post(`${API_URL}/admin/courses/${courseCode}/lessons`, payload, { withCredentials: true });
+          const res = await api.post(`/admin/courses/${courseCode}/lessons`, payload);
           
           if (res.data.success) {
               const newLesson = { ...res.data.lesson, quizzes: [] };
@@ -257,7 +251,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           'Are you sure you want to delete this lesson? This action cannot be undone.',
           async () => {
               try {
-                  await axios.delete(`${API_URL}/admin/lessons/${activeLessonId}`, { withCredentials: true });
+                  await api.delete(`/admin/lessons/${activeLessonId}`);
                   const updatedLessons = lessons.filter(l => l.id !== activeLessonId);
                   setLessons(updatedLessons);
                   if (updatedLessons.length > 0) {
@@ -286,7 +280,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
               correct_answer: "Option A"
           };
 
-          const res = await axios.post(`${API_URL}/admin/lessons/${activeLessonId}/quizzes`, payload, { withCredentials: true });
+          const res = await api.post(`/admin/lessons/${activeLessonId}/quizzes`, payload);
           
           if (res.data.success) {
               const newQuiz = res.data.quiz;
@@ -314,7 +308,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           'Are you sure you want to delete this quiz question?',
           async () => {
               try {
-                  await axios.delete(`${API_URL}/admin/quizzes/${quizId}`, { withCredentials: true });
+                  await api.delete(`/admin/quizzes/${quizId}`);
                   setLessons(prev => prev.map(l => {
                       if (l.id !== activeLessonId) return l;
                       return { ...l, quizzes: l.quizzes.filter(q => q.id !== quizId) };
@@ -372,12 +366,12 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
 
               if (quizzes.length === 0) throw new Error("No valid quizzes found in CSV.");
 
-              const res = await axios.post(`${API_URL}/admin/lessons/${activeLessonId}/quizzes/bulk`, { quizzes }, { withCredentials: true });
+              const res = await api.post(`/admin/lessons/${activeLessonId}/quizzes/bulk`, { quizzes });
               
               if (res.data.success) {
                   showAlert('success', 'Import Successful', res.data.message, closeAlert);
-                  const refresh = await axios.get(`${API_URL}/admin/courses/${courseCode}/content`, { withCredentials: true });
-                  setLessons(refresh.data.content || []); 
+                  const refresh = await api.get(`/admin/courses/${courseCode}/content`);
+                  setLessons(refresh.data.content || []);
               }
           } catch (err) {
               console.error(err);

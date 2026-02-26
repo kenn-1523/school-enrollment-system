@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import { api } from '@/lib/apiClient';
 import { logout } from '../../../services/authService'; 
 import { 
   Dices, 
@@ -20,7 +20,6 @@ import { coursesData } from '@repo/business-logic';
 // The Player Modal
 import StudentCourseModal from '../../../components/courses/StudentCourseModal';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export default function StudentDashboard() {
   const router = useRouter();
   
@@ -60,9 +59,7 @@ export default function StudentDashboard() {
       try {
         console.log("Fetching Dashboard Data...");
         // Updated to use the dynamic API_URL
-const response = await axios.get(`${API_URL}/api/student/dashboard`, {
-  withCredentials: true
-});
+const response = await api.get('/student/dashboard');
 
         console.log("Data Received:", response.data);
         const data = response.data;
