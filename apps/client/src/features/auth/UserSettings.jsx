@@ -18,7 +18,7 @@ const UserSettings = () => {
     const parsed = auth.user;
     const id = parsed.id || parsed.student_id;
     
-    api.get(`/student/${id}`)
+    api.get(`/api/student/${id}`)
       .then(res => {
         setUser(res.data);
         setLoading(false);

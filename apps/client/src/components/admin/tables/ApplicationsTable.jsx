@@ -12,7 +12,7 @@ export default function ApplicationsTable({ data, loading, searchQuery, setSearc
     e.stopPropagation();
     triggerAlert('success', 'Approve Application', 'Are you sure you want to approve this student?', 'Approve', async () => {
       try {
-        await api.post('/admin/approve', { studentId: id });
+        await api.post('/api/admin/approve', { studentId: id });
         refreshData();
       } catch (err) { alert("Error approving"); }
     });
@@ -22,7 +22,7 @@ export default function ApplicationsTable({ data, loading, searchQuery, setSearc
     e.stopPropagation();
     triggerAlert('warning', 'Reject Application', 'This will reject the application. Continue?', 'Reject', async () => {
       try {
-        await api.post('/admin/reject', { studentId: id });
+        await api.post('/api/admin/reject', { studentId: id });
         refreshData();
       } catch (err) { alert("Error rejecting"); }
     });

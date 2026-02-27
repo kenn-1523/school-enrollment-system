@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
+// cookie-parser removed; JWT header auth only
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt'); 
@@ -34,7 +34,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(cookieParser());
+// no cookie parser needed
 
 // 🔒 SECURITY HEADERS
 app.use((req, res, next) => {
@@ -80,15 +80,7 @@ app.post('/api/admin/login', validate(loginSchema), (req, res) => {
         if (match) {
             const token = jwt.sign({ isAdmin: true, username: adminUser.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
             
-            // ✅ Fixed cookie name to 'token' and added environment-aware security
-            res.cookie('token', token, {
-                httpOnly: true,
-                secure: isProd, 
-                sameSite: isProd ? 'none' : 'lax',
-                maxAge: 4 * 60 * 60 * 1000
-            });
-
-            // ✅ Added token in response for frontend localStorage 
+            // ✅ return token in body for localStorage auth
             res.status(200).json({ success: true, token, user: { isAdmin: true, username: adminUser.username } });
         } else {
             res.status(401).json({ success: false, message: "Invalid Credentials" });
@@ -98,25 +90,19 @@ app.post('/api/admin/login', validate(loginSchema), (req, res) => {
 
 // LOGOUT
 app.post('/api/logout', (req, res) => {
-    res.clearCookie('token', { 
-        httpOnly: true, 
-        secure: isProd, 
-        sameSite: isProd ? 'none' : 'lax' 
-    });
+    // no cookies to clear in header-auth setup
     res.json({ message: 'Logged out' });
 });
 
 // CHECK AUTH (ME)
 app.get('/api/me', (req, res) => {
-    // ✅ Support for cookie token OR header authorization
-    let token = req.cookies.token;
-    
-    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        token = req.headers.authorization.split(' ')[1];
+    // header-only JWT
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) {
+        return res.status(401).send({ message: 'Not authenticated' });
     }
+    const token = authHeader.split(' ')[1];
 
-    if (!token) return res.status(401).send({ message: 'Not authenticated' });
-    
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         if (decoded.isAdmin) return res.status(200).send({ user: { isAdmin: true, username: decoded.username } });

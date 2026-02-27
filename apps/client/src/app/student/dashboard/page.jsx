@@ -35,20 +35,13 @@ export default function StudentDashboard() {
 
   // ✅ 1. SECURITY CHECK (Runs First)
   useEffect(() => {
-    const checkAuth = () => {
-      // We check for the session flag in localStorage
-      const isLoggedIn = localStorage.getItem('isStudentLoggedIn');
-      console.log("Dashboard Security Check - isStudentLoggedIn:", isLoggedIn);
-
-      if (isLoggedIn !== 'true') {
-        console.log("Unauthorized. Redirecting to Login...");
-        router.replace('/student/login');
-      } else {
-        console.log("Authorized. Loading Dashboard...");
-        setAuthChecking(false); // Allow the dashboard to start loading data
-      }
-    };
-    checkAuth();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log("No token found, redirecting to login");
+      router.replace('/student/login');
+    } else {
+      setAuthChecking(false);
+    }
   }, [router]);
 
   // ✅ 2. FETCH DATA (Runs only after Security Check passes)
@@ -59,7 +52,7 @@ export default function StudentDashboard() {
       try {
         console.log("Fetching Dashboard Data...");
         // Updated to use the dynamic API_URL
-const response = await api.get('/student/dashboard');
+const response = await api.get('/api/student/dashboard');
 
         console.log("Data Received:", response.data);
         const data = response.data;
@@ -73,9 +66,10 @@ const response = await api.get('/student/dashboard');
       } catch (err) {
         console.error("Dashboard Fetch Error:", err);
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-            // API Says Token Invalid -> Force Logout
-            console.log("Session Expired. Logging out...");
-            localStorage.removeItem('isStudentLoggedIn');
+            // API says token invalid -> logout and redirect
+            console.log("Session expired. Logging out...");
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
             router.push('/student/login');
         } else {
             setError("Unable to load profile. Please try again later.");
@@ -92,11 +86,10 @@ const response = await api.get('/student/dashboard');
     try {
       console.log("Logging out...");
       await logout();
-      localStorage.removeItem('isStudentLoggedIn');
+      // authService.logout already clears token/user
       window.location.href = '/student/login';
     } catch (err) {
       console.error("Logout failed", err);
-      localStorage.removeItem('isStudentLoggedIn'); 
       router.push('/student/login');
     }
   };

@@ -11,14 +11,7 @@ const AuthContext = createContext({
   logout: async () => {},
 });
 
-/**
- * ✅ ENV STRATEGY (BEST PRACTICE)
- *
- * Set the frontend API base URL via environment variable:
- *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
- *
- * Do not hardcode local development URLs in production code.
- */
+// API base is centralized in lib/apiClient.js; it always points to the Render deployment.
 
 export const AuthProvider = ({ children }) => {
 
@@ -36,7 +29,7 @@ export const AuthProvider = ({ children }) => {
 
   const checkUser = async () => {
     try {
-      const res = await api.get('/me', { timeout: 15000 });
+      const res = await api.get('/api/me', { timeout: 15000 });
 
       if (res.status === 200 && res.data?.user) {
         const currentUser = res.data.user;
@@ -51,6 +44,11 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(false);
       }
     } catch (error) {
+      // clear potentially invalid token
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
       setUser(null);
       setIsAdmin(false);
     } finally {
@@ -70,15 +68,16 @@ export const AuthProvider = ({ children }) => {
   // ---------------------------
   const logout = async () => {
     try {
-      await api.post('/logout', {}, { timeout: 10000 });
+      await api.post('/api/logout', {}, { timeout: 10000 });
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
       setUser(null);
       setIsAdmin(false);
 
-      // safer redirect
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }

@@ -285,7 +285,7 @@ const EnrollPage = () => {
     if (formData.birthCertFile) subData.append('birthCertFile', formData.birthCertFile);
 try {
       // Use the centralized `api` client for network calls
-      const res = await api.post('/enroll', subData, {
+      const res = await api.post('/api/enroll', subData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setSuccessData({ id: res.data.id || 'Pending' });

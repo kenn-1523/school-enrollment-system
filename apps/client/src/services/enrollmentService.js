@@ -38,7 +38,7 @@ export const submitEnrollment = async (formData, idFile, birthCertFile) => {
         }
 
         // 3. Send the request
-        const response = await api.post('/enroll', payload, {
+        const response = await api.post('/api/enroll', payload, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }

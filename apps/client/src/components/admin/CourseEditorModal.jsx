@@ -123,7 +123,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
   useEffect(() => {
     if (isOpen && courseCode) {
         setLoading(true);
-        api.get(`/admin/courses/${courseCode}/content`)
+        api.get(`/api/admin/courses/${courseCode}/content`)
             .then(res => {
                 const loadedLessons = res.data.content || []; 
                 setLessons(loadedLessons);
@@ -186,7 +186,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       };
 
       try {
-          await api.put(`/admin/lessons/${lessonToSave.id}`, payload);
+          await api.put(`/api/admin/lessons/${lessonToSave.id}`, payload);
           showAlert('success', 'Saved!', 'Lesson details updated successfully.', closeAlert);
       } catch (err) {
           console.error("Save Lesson Error:", err);
@@ -207,7 +207,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
       };
 
       try {
-          await api.put(`/admin/quizzes/${quiz.id}`, payload);
+          await api.put(`/api/admin/quizzes/${quiz.id}`, payload);
           showAlert('success', 'Saved!', 'Quiz question updated.', closeAlert);
       } catch (err) {
           showAlert('error', 'Error', 'Failed to save quiz.', closeAlert);
@@ -227,7 +227,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
               video_url: null
           };
           
-          const res = await api.post(`/admin/courses/${courseCode}/lessons`, payload);
+          const res = await api.post(`/api/admin/courses/${courseCode}/lessons`, payload);
           
           if (res.data.success) {
               const newLesson = { ...res.data.lesson, quizzes: [] };
@@ -251,7 +251,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           'Are you sure you want to delete this lesson? This action cannot be undone.',
           async () => {
               try {
-                  await api.delete(`/admin/lessons/${activeLessonId}`);
+                  await api.delete(`/api/admin/lessons/${activeLessonId}`);
                   const updatedLessons = lessons.filter(l => l.id !== activeLessonId);
                   setLessons(updatedLessons);
                   if (updatedLessons.length > 0) {
@@ -280,7 +280,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
               correct_answer: "Option A"
           };
 
-          const res = await api.post(`/admin/lessons/${activeLessonId}/quizzes`, payload);
+          const res = await api.post(`/api/admin/lessons/${activeLessonId}/quizzes`, payload);
           
           if (res.data.success) {
               const newQuiz = res.data.quiz;
@@ -308,7 +308,7 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
           'Are you sure you want to delete this quiz question?',
           async () => {
               try {
-                  await api.delete(`/admin/quizzes/${quizId}`);
+                  await api.delete(`/api/admin/quizzes/${quizId}`);
                   setLessons(prev => prev.map(l => {
                       if (l.id !== activeLessonId) return l;
                       return { ...l, quizzes: l.quizzes.filter(q => q.id !== quizId) };
@@ -366,11 +366,11 @@ export default function CourseEditorModal({ courseCode, isOpen, onClose }) {
 
               if (quizzes.length === 0) throw new Error("No valid quizzes found in CSV.");
 
-              const res = await api.post(`/admin/lessons/${activeLessonId}/quizzes/bulk`, { quizzes });
+              const res = await api.post(`/api/admin/lessons/${activeLessonId}/quizzes/bulk`, { quizzes });
               
               if (res.data.success) {
                   showAlert('success', 'Import Successful', res.data.message, closeAlert);
-                  const refresh = await api.get(`/admin/courses/${courseCode}/content`);
+                  const refresh = await api.get(`/api/admin/courses/${courseCode}/content`);
                   setLessons(refresh.data.content || []);
               }
           } catch (err) {

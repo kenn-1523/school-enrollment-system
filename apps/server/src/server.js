@@ -10,7 +10,7 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
+// removed cookie-parser; authentication now via JWT header only
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -48,9 +48,8 @@ if (!process.env.NODE_ENV) {
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '4h';
 
-// Optional: if you need cookies shared across subdomains (www and non-www)
-// Example: COOKIE_DOMAIN=.croupiertraining.sgwebworks.com
-const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
+// cookies no longer used; JWTs must be sent in Authorization header
+const COOKIE_DOMAIN = undefined; // kept for compatibility but unused
 
 // ==========================================
 // 1) APP INIT
@@ -59,7 +58,7 @@ const app = express();
 
 // ==========================================
 // Trust Hostinger / proxy so secure cookies are set correctly
-app.set('trust proxy', 1);
+app.set('trust proxy', 1); // still trust proxy for HTTPS enforcement
 // ==========================================
 
 // Enforce HTTPS in production (behind proxy)
@@ -90,12 +89,12 @@ const FRONTEND_ORIGIN = 'https://croupiertraining.sgwebworks.com';
 const corsOptions = isProd
   ? {
       origin: FRONTEND_ORIGIN, // exact origin only
-      credentials: true,       // allow cookies
+      credentials: false,      // no cookies, header auth only
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
     }
   : {
-      // Development-friendly: allow localhost and configured hostinger preview origins
+      // Development: allow localhost + preview origins
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
         const devAllow = [
@@ -110,7 +109,7 @@ const corsOptions = isProd
         console.warn(`⚠️ CORS blocked for origin: ${origin}`);
         return callback(new Error(`CORS blocked for origin: ${origin}`));
       },
-      credentials: true,
+      credentials: false,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
     };
@@ -123,8 +122,7 @@ app.use(cors(corsOptions));
 // ==========================================
 // 3) MIDDLEWARE
 // ==========================================
-// Ensure cookieParser runs before body parsers so auth middleware can read cookies early
-app.use(cookieParser());
+// cookieParser removed; JWT expected in Authorization header
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -141,26 +139,13 @@ app.use('/api/enroll', enrollRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 
-// ==========================================
-// 5) COOKIE HELPERS
-// ==========================================
-function authCookieOptions() {
-  return {
-    httpOnly: true,
-    secure: true, // production: must be HTTPS
-    sameSite: 'None', // allow cross-site cookies
-    domain: '.sgwebworks.com', // share across croupiertraining.sgwebworks.com and api-croupiertraining.sgwebworks.com
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: '/'
-  };
-}
+// simple keep-alive / health endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'awake' });
+});
 
-/**
- * IMPORTANT:
- * We will use ONE cookie name for auth everywhere:
- * token
- */
-const AUTH_COOKIE_NAME = 'token';
+// COOKIE HANDLING REMOVED – JWTs are delivered via Authorization header, not cookies.
+// (helper functions and constants previously here have been deleted.)
 
 // ==========================================
 // 6) AUTH ENDPOINTS
@@ -211,12 +196,10 @@ app.post('/api/admin/login', validate(loginSchema), async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    res.cookie(AUTH_COOKIE_NAME, token, authCookieOptions());
-
     // ✅ ADDED TOKEN IN RESPONSE FOR LOCALSTORAGE AUTH
     return res.status(200).json({
       success: true,
-      token, 
+      token,
       user: { username: admin.username, isAdmin: true, id: adminId }
     });
   } catch (err) {
@@ -230,22 +213,16 @@ app.post('/api/admin/login', validate(loginSchema), async (req, res) => {
  * GET /api/me
  */
 app.get('/api/me', (req, res) => {
-  // ✅ Support for cookie token OR header authorization
-  let token = req.cookies?.[AUTH_COOKIE_NAME] || null;
-
-  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
-  }
-
-  if (!token) {
+  // JWT is required in Authorization header (Bearer <token>)
+  const authHeader = req.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Not authenticated' });
   }
 
+  const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-
     const userId = decoded.admin_id || decoded.student_id || decoded.id || null;
-
     return res.status(200).json({
       user: {
         isAdmin: !!decoded.isAdmin,
@@ -263,11 +240,7 @@ app.get('/api/me', (req, res) => {
  * POST /api/logout
  */
 app.post('/api/logout', (req, res) => {
-  const clearOpts = { ...authCookieOptions(), maxAge: 0 };
-  res.clearCookie(AUTH_COOKIE_NAME, clearOpts);
-  res.clearCookie('admin_token', clearOpts);
-  res.clearCookie('student_token', clearOpts);
-
+  // No cookies to clear; client simply removes token locally
   return res.status(200).json({ message: 'Logged out' });
 });
 

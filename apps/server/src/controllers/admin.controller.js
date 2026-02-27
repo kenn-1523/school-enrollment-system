@@ -76,14 +76,8 @@ exports.loginAdmin = async (req, res) => {
             { expiresIn: '4h' }
         );
 
-        res.cookie('admin_token', token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            maxAge: 14400000
-        });
-
-        return res.status(200).json({ success: true });
+        // header-only auth: return token so frontend can store it
+        return res.status(200).json({ success: true, token, user: { username: admin.username, isAdmin: true, id: admin.id } });
     } catch (err) {
         console.error('Admin login error:', err);
         return res.status(500).json({ message: 'Server error' });

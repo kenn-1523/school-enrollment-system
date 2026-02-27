@@ -26,7 +26,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
+// cookie-parser not required for header-only auth
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
@@ -112,8 +112,7 @@ app.options('*', cors());
 // ==========================================
 //           ✅ MIDDLEWARES
 // ==========================================
-// Ensure cookieParser runs before body parsers so auth middleware can read cookies early
-app.use(cookieParser());
+// cookieParser removed; tokens come from Authorization header only
 app.use(express.json({ limit: '2mb' }));
 
 // ✅ DEPENDENCY INJECTION
@@ -203,10 +202,10 @@ app.post('/api/admin/login', validate(loginSchema), async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
-    res.cookie('token', token, cookieOptions());
-
+    // header-only auth; send token in response body
     return res.status(200).json({
       success: true,
+      token,
       user: { username: adminUser.username, isAdmin: true }
     });
   } catch (err) {
@@ -218,34 +217,23 @@ app.post('/api/admin/login', validate(loginSchema), async (req, res) => {
 /**
  * LOGOUT
  * POST /api/logout
- * Clears cookie: token
+ * Client discards token; server has nothing to clear
  */
 app.post('/api/logout', (req, res) => {
-  try {
-    res.clearCookie('token', {
-      ...cookieOptions(),
-      // clearCookie needs same attributes used to set the cookie
-      maxAge: undefined
-    });
-
-    return res.status(200).json({ message: 'Logged out' });
-  } catch (err) {
-    console.error('Logout error:', err);
-    return res.status(200).json({ message: 'Logged out' });
-  }
+  return res.status(200).json({ message: 'Logged out' });
 });
 
 /**
  * CHECK AUTH (ME)
  * GET /api/me
- * Reads JWT from cookie: token
+ * Reads JWT from Authorization header (Bearer token)
  */
 app.get('/api/me', (req, res) => {
-  const token = req.cookies?.token;
-
-  if (!token) {
+  const auth = req.headers.authorization || '';
+  if (!auth.startsWith('Bearer ')) {
     return res.status(401).json({ message: 'Not authenticated' });
   }
+  const token = auth.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);

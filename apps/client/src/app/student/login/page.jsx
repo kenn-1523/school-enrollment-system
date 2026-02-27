@@ -13,22 +13,16 @@ export default function StudentLoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [showWake, setShowWake] = useState(false);
 
-  // ✅ 1. CHECK IF ALREADY LOGGED IN (On Mount)
+  // ✅ 1. CHECK JWT PRESENCE (On Mount)
   useEffect(() => {
-    const checkSession = () => {
-      const isLoggedIn = localStorage.getItem('isStudentLoggedIn');
-      console.log("Login Page Check - isStudentLoggedIn:", isLoggedIn);
-
-      if (isLoggedIn === 'true') {
-        console.log("User already logged in. Redirecting to Dashboard...");
-        router.replace('/student/dashboard');
-      } else {
-        setIsChecking(false); // Allow showing the form
-      }
-    };
-    
-    checkSession();
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.replace('/student/dashboard');
+    } else {
+      setIsChecking(false);
+    }
   }, [router]);
 
   const handleChange = (e) => {
@@ -39,20 +33,17 @@ export default function StudentLoginPage() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    setShowWake(false);
+    const wakeTimer = setTimeout(() => setShowWake(true), 2000);
 
     console.log("Attempting Login for:", formData.username);
 
     try {
-      // 1. Call Backend (Sets the httpOnly cookie)
+      // 1. Call backend; response includes JWT token stored by service
       await loginStudent(formData.username, formData.password);
       console.log("Backend Login Success.");
       
-      // 2. Set the LocalStorage Flag (CRITICAL)
-      localStorage.setItem('isStudentLoggedIn', 'true');
-      console.log("LocalStorage Flag Set: true");
-      
-      // 3. Force Redirect
-      console.log("Redirecting to Dashboard...");
+      // token was stored by loginStudent, simply redirect
       router.push('/student/dashboard');
       
     } catch (err) {
@@ -63,10 +54,13 @@ export default function StudentLoginPage() {
         setError(err.message || '❌ Invalid login credentials.');
       }
       setIsLoading(false);
+    } finally {
+      clearTimeout(wakeTimer);
+      setShowWake(false);
     }
   };
 
-  // Prevent flash while checking session
+  // Prevent flash while checking token
   if (isChecking) {
       return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500">Loading Portal...</div>;
   }
@@ -89,6 +83,11 @@ export default function StudentLoginPage() {
               : 'bg-red-900/20 border-red-500/50 text-red-200'
           }`}>
             {error}
+          </div>
+        )}
+       {isLoading && showWake && (
+         <div className="mb-6 p-4 text-sm rounded-lg text-center text-yellow-200 bg-yellow-900/20 border border-yellow-500/50">
+            Waking up server, please wait...
           </div>
         )}
 

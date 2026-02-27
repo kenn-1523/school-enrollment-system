@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, useMemo } from 'react';
-import { api } from '@/lib/apiClient';
+import { api, API_BASE } from '@/lib/apiClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sun, Moon, X, FileText, ExternalLink, Mail, Phone, Calendar, GraduationCap, Briefcase, MapPin, BookOpen, ChevronDown, ListChecks } from 'lucide-react';
 
@@ -53,19 +53,8 @@ function DashboardContent() {
 
 const fetchStudents = async () => {
   setLoading(true);
-
   try {
-    const token =
-      localStorage.getItem("token") ||
-      localStorage.getItem("adminToken");
-
-    if (!token) {
-      console.warn('No auth token found.');
-      setStudents([]);
-      return;
-    }
-
-    const res = await api.get('/admin/students?limit=1000');
+    const res = await api.get('/api/admin/students?limit=1000');
 
     console.log("Students API response:", res.data);
 
@@ -90,7 +79,7 @@ const fetchStudents = async () => {
   const fetchEnrolledProgress = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/admin/score-report');
+      const res = await api.get('/api/admin/score-report');
       setEnrolledProgress(res.data || []);
     } catch (err) {
       console.error("Fetch score report error:", err);
@@ -161,11 +150,8 @@ const fetchStudents = async () => {
     setViewMode('progress');
   };
 
-  const getFileUrl = (filename) => {
-    const raw = process.env.NEXT_PUBLIC_API_URL || '';
-    const cleaned = raw.replace(/\/+$/, '').replace(/\/api$/i, '');
-    return `${cleaned}/api/secure-file/${filename}`;
-  };
+  // API_BASE already contains "/api" so avoid double prefix
+  const getFileUrl = (filename) => `${API_BASE}/secure-file/${filename}`;
 
   // Filters
   const filteredStudents = students.filter(s =>

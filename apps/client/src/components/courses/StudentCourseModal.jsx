@@ -22,16 +22,7 @@ import {
 // ✅ MONOREPO SAFE IMPORT
 import { useTheme } from '../../context/ThemeContext';
 
-/**
- * ✅ ENV STRATEGY
- *
- * Configure the API base via environment variable:
- *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
- *
- * IMPORTANT:
- * - use string fallback in quotes
- * - normalize trailing slash
- */
+// API configuration is handled by lib/apiClient.js; all requests go through the `api` instance (Render URL).
 export default function StudentCourseModal({ course, isOpen, onClose }) {
   // --- STATE ---
   const [activeLessonIndex, setActiveLessonIndex] = useState(0);
@@ -226,7 +217,7 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
    *
    * NOTE about withCredentials:
    * - Keep if your backend auth uses cookies/session.
-   * - If you use JWT in Authorization header, remove withCredentials.
+   * - JWTs are sent via Authorization header; withCredentials is false on the axios client.
    */
   const handleSubmitQuiz = async (forceFail = false) => {
     const activeLesson = (course?.lessons || [])[activeLessonIndex];
@@ -240,8 +231,7 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
     }
 
     try {
-      const response = await api.post(
-        '/student/quiz/submit',
+      const response = await api.post('/api/student/quiz/submit',
         {
           lessonId: activeLesson.id,
           answers: quizAnswers

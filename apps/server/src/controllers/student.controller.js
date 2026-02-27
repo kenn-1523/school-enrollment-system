@@ -22,16 +22,11 @@ class StudentController {
                 { expiresIn: '1d' }
             );
 
-res.cookie('student_token', token, {
-  httpOnly: true,
-  secure: false,
-  sameSite: 'lax',
-  maxAge: 24 * 60 * 60 * 1000
-});
-
+            // return token in body; frontend stores in localStorage
             return res.json({
                 success: true,
                 message: "Login Successful",
+                token,
                 user: {
                     student_id: student.student_id,
                     username: student.username,

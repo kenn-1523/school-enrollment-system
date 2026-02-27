@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { api } from '@/lib/apiClient';
+import { login } from '../../services/authService';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
@@ -9,16 +9,7 @@ import CustomAlert from '../../components/CustomAlert';
 import { useAuth } from '../../context/AuthContext';
 import './AdminLogin.css';
 
-/**
- * ✅ API configuration
- *
- * Configure the API base with the environment variable:
- *   NEXT_PUBLIC_API_URL=https://api-croupiertraining.sgwebworks.com
- *
- * NOTE:
- * - This component uses cookies (withCredentials: true)
- * - Backend must allow CORS credentials if cross-origin
- */
+// login page uses centralized api client via authService. JWT stored in localStorage.
 
 const LoginPage = () => {
   const router = useRouter();
@@ -29,6 +20,7 @@ const LoginPage = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [status, setStatus] = useState({ loading: false, error: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [showWake, setShowWake] = useState(false);
 
   // Controls the Success Modal
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -48,11 +40,11 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, error: '' });
+    setShowWake(false);
+    const wakeTimer = setTimeout(() => setShowWake(true), 2000);
 
     try {
-      await api.post('/admin/login', { username: formData.username, password: formData.password }, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
-
-      // Success - show modal
+      await login(formData.username, formData.password);
       setStatus({ loading: false, error: '' });
       setLoginModalOpen(true);
     } catch (err) {
@@ -61,9 +53,13 @@ const LoginPage = () => {
       const message =
         err?.response?.data?.message ||
         err?.response?.data?.error ||
+        err?.message ||
         'Access Denied: Invalid Admin Credentials';
 
       setStatus({ loading: false, error: message });
+    } finally {
+      clearTimeout(wakeTimer);
+      setShowWake(false);
     }
   };
 
@@ -131,6 +127,19 @@ const LoginPage = () => {
               }}
             >
               {status.error}
+            </div>
+          )}
+          {status.loading && showWake && (
+            <div
+              style={{
+                color: '#fbbf24',
+                padding: '12px',
+                borderRadius: '8px',
+                marginBottom: '1.5rem',
+                fontSize: '0.9rem'
+              }}
+            >
+              Waking up server, please wait...
             </div>
           )}
 

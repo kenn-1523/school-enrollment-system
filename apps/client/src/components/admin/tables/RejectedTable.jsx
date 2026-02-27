@@ -12,7 +12,7 @@ export default function RejectedTable({ data, loading, searchQuery, setSearchQue
     e.stopPropagation();
     triggerAlert('info', 'Restore Application', 'Move this application back to Pending?', 'Restore', async () => {
       try {
-        await api.post('/admin/restore', { studentId: id });
+        await api.post('/api/admin/restore', { studentId: id });
         refreshData();
       } catch (err) { alert("Error restoring"); }
     });

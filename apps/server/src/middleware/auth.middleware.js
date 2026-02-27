@@ -6,7 +6,6 @@ const jwt = require("jsonwebtoken");
  * =====================================================
  * Supports:
  * - Authorization: Bearer <token>
- * - Cookies: admin_token, student_token, token
  *
  * Safe:
  * - Never crashes server
@@ -16,24 +15,14 @@ const jwt = require("jsonwebtoken");
 
 const authenticateJWT = (req, res, next) => {
   try {
+    // only Authorization header is supported
+    const authHeader = req.headers.authorization || '';
     let token = null;
-
-    // 1️⃣ Check Authorization Header first
-    const authHeader = req.headers.authorization;
-
-    if (authHeader && authHeader.startsWith("Bearer ")) {
+    if (authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7).trim();
     }
 
-    // 2️⃣ Fallback to Cookies (for compatibility)
-    if (!token && req.cookies) {
-      token =
-        req.cookies.admin_token ||
-        req.cookies.student_token ||
-        req.cookies.token ||
-        null;
-    }
-
+  
     if (!token) {
       return res.status(401).json({
         message: "Authentication required. No token provided.",
