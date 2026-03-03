@@ -29,8 +29,8 @@ export default function AdminCoursesPage() {
 
     const fetchData = async () => {
       try {
-        // ✅ FIXED PATH: /api/admin/courses
-        const res = await api.get('/api/admin/courses');
+        // ✅ FIXED PATH: /admin/courses
+        const res = await api.get('/admin/courses');
 
         if (res.data && res.data.success) {
           setCourses(res.data.courses || []);

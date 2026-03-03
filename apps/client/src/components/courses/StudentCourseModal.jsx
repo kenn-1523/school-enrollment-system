@@ -213,7 +213,7 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
 
   /**
    * ✅ SERVER-SIDE SUBMISSION (works local + prod)
-   * Uses API_URL from env.
+   * Uses centralized axios client; full URLs should import API_BASE if needed.
    *
    * NOTE about withCredentials:
    * - Keep if your backend auth uses cookies/session.
@@ -231,7 +231,7 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
     }
 
     try {
-      const response = await api.post('/api/student/quiz/submit',
+      const response = await api.post('/student/quiz/submit',
         {
           lessonId: activeLesson.id,
           answers: quizAnswers
@@ -863,11 +863,6 @@ export default function StudentCourseModal({ course, isOpen, onClose }) {
             </div>
           )}
         </main>
-      </div>
-
-      {/* Debug display (optional): shows which API base you are hitting */}
-      <div className="fixed bottom-2 right-2 text-[10px] px-2 py-1 rounded bg-black/50 text-white z-[70]">
-        API: {API_URL}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, Suspense, useMemo } from 'react';
-import { api, API_BASE } from '@/lib/apiClient';
+import { api, API_BASE } from '@/lib/apiClient'; // API_BASE used for file download URL
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sun, Moon, X, FileText, ExternalLink, Mail, Phone, Calendar, GraduationCap, Briefcase, MapPin, BookOpen, ChevronDown, ListChecks } from 'lucide-react';
 
@@ -54,7 +54,7 @@ function DashboardContent() {
 const fetchStudents = async () => {
   setLoading(true);
   try {
-    const res = await api.get('/api/admin/students?limit=1000');
+    const res = await api.get('/admin/students?limit=1000');
 
     console.log("Students API response:", res.data);
 
@@ -79,7 +79,7 @@ const fetchStudents = async () => {
   const fetchEnrolledProgress = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/admin/score-report');
+      const res = await api.get('/admin/score-report');
       setEnrolledProgress(res.data || []);
     } catch (err) {
       console.error("Fetch score report error:", err);
@@ -396,7 +396,7 @@ const fetchStudents = async () => {
 
 const AdminDashboard = () => {
   const auth = useAuth();
-  useEffect(() => { if (!auth.loading && !auth.isAdmin) window.location.href = '/login'; }, [auth.loading, auth.isAdmin]);
+  useEffect(() => { if (!auth.loading && !auth.isAdmin) window.location.href = '/admin/login'; }, [auth.loading, auth.isAdmin]);
   if (auth.loading) return <div className="loading-screen">Loading Portal...</div>;
   if (!auth.isAdmin) return null;
   return <Suspense fallback={<div className="loading-screen">Loading...</div>}><DashboardContent /></Suspense>;

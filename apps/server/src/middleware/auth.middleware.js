@@ -61,9 +61,11 @@ const authenticateJWT = (req, res, next) => {
  */
 
 const requireAdmin = (req, res, next) => {
+  // accept either explicit role or legacy isAdmin flag
   const role = (req.user?.role || "").toLowerCase();
+  const isAdminFlag = req.user?.isAdmin;
 
-  if (role !== "admin") {
+  if (role !== "admin" && !isAdminFlag) {
     return res.status(403).json({ message: "Access denied. Admin privileges required." });
   }
 

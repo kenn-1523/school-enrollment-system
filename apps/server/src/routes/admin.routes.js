@@ -23,46 +23,45 @@ function safeJsonParseArray(value) {
 // ==========================================
 // 1. STUDENT MANAGEMENT
 // ==========================================
-router.get('/students', authenticateJWT, adminController.getAllStudents);
+router.get('/students', authenticateJWT, requireAdmin, adminController.getAllStudents);
 
 // ✅ OLD ROUTE (Keep for compatibility)
-router.get('/enrolled-progress', authenticateJWT, adminController.getEnrolledModuleProgress);
+router.get('/enrolled-progress', authenticateJWT, requireAdmin, adminController.getEnrolledModuleProgress);
 
 // ✅ NEW SCORE REPORT ROUTE
-router.get('/score-report', authenticateJWT, adminController.getEnrolledScoreReport);
+router.get('/score-report', authenticateJWT, requireAdmin, adminController.getEnrolledScoreReport);
 
 // ✅ Master List of Enrolled Students
-router.get('/enrolled', authenticateJWT, adminController.getEnrolledStudents);
+router.get('/enrolled', authenticateJWT, requireAdmin, adminController.getEnrolledStudents);
 
-router.get('/student/:studentId', authenticateJWT, adminController.getStudentById);
+router.get('/student/:studentId', authenticateJWT, requireAdmin, adminController.getStudentById);
 
 // ==========================================
 // 2. STUDENT ACTIONS
 // ==========================================
-router.put('/approve', authenticateJWT, (req, res) => {
+router.put('/approve', authenticateJWT, requireAdmin, (req, res) => {
     req.body.status = 'APPROVED';
     adminController.updateStatus(req, res);
 });
 
-router.put('/reject', authenticateJWT, (req, res) => {
+router.put('/reject', authenticateJWT, requireAdmin, (req, res) => {
     req.body.status = 'REJECTED';
     adminController.updateStatus(req, res);
 });
 
-router.put('/restore', authenticateJWT, (req, res) => {
+router.put('/restore', authenticateJWT, requireAdmin, (req, res) => {
     req.body.status = 'PENDING';
     adminController.updateStatus(req, res);
 });
 
-router.delete('/students/:id', authenticateJWT, adminController.deleteStudent);
+router.delete('/students/:id', authenticateJWT, requireAdmin, adminController.deleteStudent);
 
 // ==========================================
 // 3. ADMIN PROFILE & SECURE FILES
 // ==========================================
-router.put('/update-profile', authenticateJWT, adminController.updateProfile);
+router.put('/update-profile', authenticateJWT, requireAdmin, adminController.updateProfile);
 
-router.get('/secure-file/:filename', authenticateJWT, (req, res) => {
-    if (!req.user?.isAdmin) return res.status(403).send("Access Denied");
+router.get('/secure-file/:filename', authenticateJWT, requireAdmin, (req, res) => {
     const filePath = path.join(__dirname, '../../secure_uploads', req.params.filename);
     if (fs.existsSync(filePath)) {
         res.sendFile(filePath);
@@ -74,17 +73,17 @@ router.get('/secure-file/:filename', authenticateJWT, (req, res) => {
 // ==========================================
 // 4. COURSE MANAGEMENT
 // ==========================================
-router.get('/courses', authenticateJWT, adminController.getCourses);
-router.post('/courses', authenticateJWT, adminController.createCourse);
+router.get('/courses', authenticateJWT, requireAdmin, adminController.getCourses);
+router.post('/courses', authenticateJWT, requireAdmin, adminController.createCourse);
 
-router.get('/courses/:id/content', authenticateJWT, adminController.getCourseContent);
+router.get('/courses/:id/content', authenticateJWT, requireAdmin, adminController.getCourseContent);
 
-router.post('/courses/:id/lessons', authenticateJWT, adminController.addLesson);
-router.put('/lessons/:lessonId', authenticateJWT, adminController.updateLesson);
-router.delete('/lessons/:lessonId', authenticateJWT, adminController.deleteLesson);
+router.post('/courses/:id/lessons', authenticateJWT, requireAdmin, adminController.addLesson);
+router.put('/lessons/:lessonId', authenticateJWT, requireAdmin, adminController.updateLesson);
+router.delete('/lessons/:lessonId', authenticateJWT, requireAdmin, adminController.deleteLesson);
 
-router.put('/courses/:id', authenticateJWT, adminController.updateCourse);
-router.delete('/courses/:id', authenticateJWT, adminController.deleteCourse);
+router.put('/courses/:id', authenticateJWT, requireAdmin, adminController.updateCourse);
+router.delete('/courses/:id', authenticateJWT, requireAdmin, adminController.deleteCourse);
 
 
 // ==========================================
@@ -92,7 +91,7 @@ router.delete('/courses/:id', authenticateJWT, adminController.deleteCourse);
 // ==========================================
 
 // ✅ Single Add Quiz (Now returns consistent options array)
-router.post('/lessons/:lessonId/quizzes', authenticateJWT, async (req, res) => {
+router.post('/lessons/:lessonId/quizzes', authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { lessonId } = req.params;
         const { question, options, correct_answer } = req.body;
@@ -122,7 +121,7 @@ router.post('/lessons/:lessonId/quizzes', authenticateJWT, async (req, res) => {
 });
 
 // ✅ Bulk Import Quizzes
-router.post('/lessons/:lessonId/quizzes/bulk', authenticateJWT, async (req, res) => {
+router.post('/lessons/:lessonId/quizzes/bulk', authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { lessonId } = req.params;
         const { quizzes } = req.body; 
@@ -151,7 +150,7 @@ router.post('/lessons/:lessonId/quizzes/bulk', authenticateJWT, async (req, res)
 });
 
 // ✅ UPDATE QUIZ (PUT)
-router.put('/quizzes/:id', authenticateJWT, async (req, res) => {
+router.put('/quizzes/:id', authenticateJWT, requireAdmin, async (req, res) => {
     try {
         if (!req.user?.isAdmin) {
             return res.status(403).json({ message: 'Forbidden' });
@@ -181,7 +180,7 @@ router.put('/quizzes/:id', authenticateJWT, async (req, res) => {
 });
 
 // ✅ Delete Quiz
-router.delete('/quizzes/:id', authenticateJWT, async (req, res) => {
+router.delete('/quizzes/:id', authenticateJWT, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         

@@ -29,12 +29,22 @@ export const AuthProvider = ({ children }) => {
 
   const checkUser = async () => {
     try {
-      const res = await api.get('/api/me', { timeout: 15000 });
+      // Don't call /me if no token exists
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
+      const res = await api.get('/me', { timeout: 15000 });
 
       if (res.status === 200 && res.data?.user) {
         const currentUser = res.data.user;
         setUser(currentUser);
-        if (currentUser.isAdmin === true || currentUser.role === 'admin' || currentUser.username === 'admin') {
+        // only consider role field for admin status
+        if (currentUser.role === 'admin') {
           setIsAdmin(true);
         } else {
           setIsAdmin(false);
@@ -68,7 +78,7 @@ export const AuthProvider = ({ children }) => {
   // ---------------------------
   const logout = async () => {
     try {
-      await api.post('/api/logout', {}, { timeout: 10000 });
+      await api.post('/logout', {}, { timeout: 10000 });
     } catch (err) {
       console.error('Logout error:', err);
     } finally {

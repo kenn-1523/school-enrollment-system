@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Base URL for all API calls.  Do NOT include a trailing `/api` here;
-// endpoints should start with `/api` when used (e.g. api.get('/api/me')).
-export const API_BASE = 'https://school-enrollment-system.onrender.com';
+// Base URL for all API calls. INCLUDES /api prefix.
+// Endpoints should NOT include /api prefix (e.g. api.get('/me') NOT api.get('/api/me')).
+export const API_BASE = 'https://school-enrollment-system.onrender.com/api';
 
 export const api = axios.create({
   baseURL: API_BASE,

@@ -24,7 +24,7 @@ function toReadableError(error) {
 export const login = async (username, password) => {
   try {
     const response = await api.post(
-      '/api/admin/login',
+      '/admin/login',
       { username, password },
       { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
     );
@@ -56,7 +56,7 @@ export const login = async (username, password) => {
 export const loginStudent = async (username, password) => {
   try {
     const response = await api.post(
-      '/api/student/login',
+      '/student/login',
       { username, password },
       { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
     );
@@ -86,8 +86,8 @@ export const loginStudent = async (username, password) => {
  */
 export const logout = async () => {
   try {
-    // Added /api/ prefix here as well
-    await api.post('/api/logout', {}, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
+    // Clears localStorage and optionally notifies backend
+    await api.post('/logout', {}, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
   } catch (err) {
     console.error('Logout error:', err);
   } finally {

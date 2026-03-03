@@ -51,8 +51,8 @@ export default function StudentDashboard() {
     const fetchDashboard = async () => {
       try {
         console.log("Fetching Dashboard Data...");
-        // Updated to use the dynamic API_URL
-const response = await api.get('/api/student/dashboard');
+        // API calls go through centralized client (no /api prefix)
+        const response = await api.get('/student/dashboard');
 
         console.log("Data Received:", response.data);
         const data = response.data;
