@@ -76,7 +76,7 @@ if (isProd) {
 // ==========================================
 const corsOptions = isProd
   ? {
-      // Production: Allow both www and non-www variants
+      // Production: Allow frontend domains (www + non-www)
       origin: [
         'https://croupiertraining.sgwebworks.com',
         'https://www.croupiertraining.sgwebworks.com'

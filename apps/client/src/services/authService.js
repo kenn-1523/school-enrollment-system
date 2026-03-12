@@ -1,4 +1,4 @@
-import { api } from '@/lib/apiClient';
+import axiosInstance from '@/lib/axiosInstance';
 
 /**
  * Helper to format error consistently
@@ -23,10 +23,10 @@ function toReadableError(error) {
  */
 export const login = async (username, password) => {
   try {
-    const response = await api.post(
+    const response = await axiosInstance.post(
       '/admin/login',
       { username, password },
-      { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
+      { timeout: 30000 }
     );
 
     if (typeof window !== 'undefined') {
@@ -55,10 +55,10 @@ export const login = async (username, password) => {
  */
 export const loginStudent = async (username, password) => {
   try {
-    const response = await api.post(
+    const response = await axiosInstance.post(
       '/student/login',
       { username, password },
-      { headers: { 'Content-Type': 'application/json' }, timeout: 30000 }
+      { timeout: 30000 }
     );
 
     if (typeof window !== 'undefined') {
@@ -87,7 +87,7 @@ export const loginStudent = async (username, password) => {
 export const logout = async () => {
   try {
     // Clears localStorage and optionally notifies backend
-    await api.post('/logout', {}, { headers: { 'Content-Type': 'application/json' }, timeout: 20000 });
+    await axiosInstance.post('/logout', {}, { timeout: 20000 });
   } catch (err) {
     console.error('Logout error:', err);
   } finally {

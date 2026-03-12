@@ -2,12 +2,12 @@ import axios from 'axios';
 
 // Base URL for all API calls. INCLUDES /api prefix.
 // Endpoints should NOT include /api prefix (e.g. api.get('/me') NOT api.get('/api/me')).
-const rootURL = process.env.NEXT_PUBLIC_API_URL || 'https://api-croupiertraining.sgwebworks.com';
+const rootURL = process.env.NEXT_PUBLIC_API_URL || 'https://school-enrollment-system.onrender.com';
 export const API_BASE = `${rootURL}/api`;
 
 export const api = axios.create({
   baseURL: API_BASE,
-  // hostinger + render require no cookies; we only send auth header
+  // render requires no cookies; we only send auth header
   timeout: 30000,         // allow extra time for cold starts
   withCredentials: false, // JWT header auth only
 });
