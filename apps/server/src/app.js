@@ -67,26 +67,6 @@ app.use('/api/student', studentRoutes); // Mounted student routes
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '4h';
 
-// LOGIN
-app.post('/api/admin/login', validate(loginSchema), (req, res) => {
-    const { username, password } = req.body;
-    db.query("SELECT * FROM admins WHERE username = ?", [username], async (err, result) => {
-        if (err) return res.status(500).json({ message: "Database Error" });
-        if (result.length === 0) return res.status(401).json({ success: false, message: "Invalid Credentials" });
-
-        const adminUser = result[0];
-        const match = await bcrypt.compare(password, adminUser.password_hash);
-        
-        if (match) {
-            const token = jwt.sign({ isAdmin: true, username: adminUser.username }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-            
-            // ✅ return token in body for localStorage auth
-            res.status(200).json({ success: true, token, user: { isAdmin: true, username: adminUser.username } });
-        } else {
-            res.status(401).json({ success: false, message: "Invalid Credentials" });
-        }
-    });
-});
 
 // LOGOUT
 app.post('/api/logout', (req, res) => {

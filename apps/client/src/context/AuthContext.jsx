@@ -43,8 +43,8 @@ export const AuthProvider = ({ children }) => {
       if (res.status === 200 && res.data?.user) {
         const currentUser = res.data.user;
         setUser(currentUser);
-        // only consider role field for admin status
-        if (currentUser.role === 'admin') {
+        // backend now returns an isAdmin boolean instead of a role string
+        if (currentUser.isAdmin) {
           setIsAdmin(true);
         } else {
           setIsAdmin(false);

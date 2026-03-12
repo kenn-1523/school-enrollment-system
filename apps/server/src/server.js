@@ -151,62 +151,8 @@ app.get('/api/health', (req, res) => {
 // 6) AUTH ENDPOINTS
 // ==========================================
 
-/**
- * ✅ ADMIN LOGIN
- * POST /api/admin/login
- * Body: { username, password }
- */
-app.post('/api/admin/login', validate(loginSchema), async (req, res) => {
-  const { username, password } = req.body;
+// admin login is now handled by /routes/admin.routes.js
 
-  try {
-    const [rows] = await db.query('SELECT * FROM admins WHERE username = ?', [username]);
-
-    if (!rows || rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid Credentials' });
-    }
-
-    const admin = rows[0];
-
-    const passwordHash = admin.password_hash;
-
-    if (!passwordHash) {
-      return res.status(500).json({ success: false, message: 'Admin password hash missing' });
-    }
-
-    const match = await bcrypt.compare(password, passwordHash);
-
-    if (!match) {
-      return res.status(401).json({ success: false, message: 'Invalid Credentials' });
-    }
-
-    const adminId = admin.admin_id ?? admin.id;
-
-    if (!adminId) {
-      return res.status(500).json({ success: false, message: 'Admin id missing (admin_id/id)' });
-    }
-
-    const token = jwt.sign(
-      {
-        isAdmin: true,
-        username: admin.username,
-        admin_id: adminId
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-
-    // ✅ ADDED TOKEN IN RESPONSE FOR LOCALSTORAGE AUTH
-    return res.status(200).json({
-      success: true,
-      token,
-      user: { username: admin.username, isAdmin: true, id: adminId }
-    });
-  } catch (err) {
-    console.error('Admin Login Error:', err);
-    return res.status(500).json({ success: false, message: 'Server Error' });
-  }
-});
 
 /**
  * ✅ WHO AM I

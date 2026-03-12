@@ -3,6 +3,8 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { authenticateJWT, requireAdmin } = require('../middleware/auth.middleware');
+const validate = require('../middleware/validateResources');
+const { loginSchema } = require('../schemas/authSchemas');
 const adminController = require('../controllers/admin.controller');
 const db = require('../config/db');
 
@@ -19,6 +21,9 @@ function safeJsonParseArray(value) {
         return [];
     }
 }
+
+// auth route for admins (no JWT required yet)
+router.post('/login', validate(loginSchema), adminController.loginAdmin);
 
 // ==========================================
 // 1. STUDENT MANAGEMENT

@@ -9,7 +9,8 @@ import './admin-login.css';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { isAdmin, loading } = useAuth();
+  // include adminLogin so that we can sync token to context before routing
+  const { isAdmin, loading, adminLogin } = useAuth();
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +41,10 @@ export default function AdminLoginPage() {
 
     try {
       await login(formData.username, formData.password);
+      // make sure the auth context picks up the new token before redirecting
+      if (typeof adminLogin === 'function') {
+        await adminLogin();
+      }
       clearTimeout(wakeTimer);
       router.push('/admin');
     } catch (err) {

@@ -37,26 +37,49 @@ const LoginPage = () => {
     setStatus((prev) => ({ ...prev, error: '' }));
   };
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ loading: true, error: '' });
     setShowWake(false);
     const wakeTimer = setTimeout(() => setShowWake(true), 2000);
 
     try {
-      await login(formData.username, formData.password);
-      setStatus({ loading: false, error: '' });
-      setLoginModalOpen(true);
+      // 1. Send request directly to the ADMIN login route using env variable
+      //    replace NEXT_PUBLIC_API_URL with your deployed backend URL if not set
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://school-enrollment-system.onrender.com'}/api/admin/login`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+        }),
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.message || data.error || 'Invalid credentials');
+      }
+
+      // 2. robust token extraction
+      const token = data.token || data.accessToken;
+      if (!token) {
+        throw new Error('No token returned from server');
+      }
+
+      // 3. persist token
+      localStorage.setItem('token', token);
+
+      // 4. update global auth state
+      if (typeof adminLogin === 'function') {
+        await adminLogin();
+      }
+
+      // 5. hard redirect so static export rehydrates correctly
+      window.location.href = '/admin';
     } catch (err) {
       console.error('Admin login error:', err);
-
-      const message =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        err?.message ||
-        'Access Denied: Invalid Admin Credentials';
-
-      setStatus({ loading: false, error: message });
+      setStatus({ loading: false, error: err.message });
     } finally {
       clearTimeout(wakeTimer);
       setShowWake(false);

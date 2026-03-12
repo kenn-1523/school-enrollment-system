@@ -70,8 +70,11 @@ exports.loginAdmin = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
+        // account for both possible primary key names
+        const adminId = admin.admin_id ?? admin.id;
+
         const token = jwt.sign(
-            { isAdmin: true, role: 'admin', username: admin.username, admin_id: admin.id },
+            { isAdmin: true, role: 'admin', username: admin.username, admin_id: adminId },
             process.env.JWT_SECRET,
             { expiresIn: '4h' }
         );
@@ -80,7 +83,7 @@ exports.loginAdmin = async (req, res) => {
         return res.status(200).json({
             success: true,
             token,
-            user: { username: admin.username, role: 'admin', isAdmin: true, id: admin.id }
+            user: { username: admin.username, role: 'admin', isAdmin: true, id: adminId }
         });
     } catch (err) {
         console.error('Admin login error:', err);
