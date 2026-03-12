@@ -1,25 +1,26 @@
 /**
+ * CONSOLIDATED PRODUCTION SERVER
+ * 
  * NOTES:
  * 1) Make sure you set NODE_ENV=production on Hostinger
  * 2) Make sure JWT_SECRET is set in .env / hosting env vars
- * 3) If your admins table primary key is admin_id (most common),
- * this code supports both admin_id and id to avoid mismatch.
+ * 3) DB_HOST, DB_USER, DB_NAME required for database connection
+ * 4) Authentication via JWT header (Authorization: Bearer <token>)
+ * 5) CORS configured for both www and non-www variants of production domain
  */
 
 require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-// removed cookie-parser; authentication now via JWT header only
 const path = require('path');
 const fs = require('fs');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // ✅ DATABASE
 const db = require('./config/db');
 
-// ✅ VALIDATION
+// ✅ IMPORTS
 const validate = require('./middleware/validateResources');
 const { loginSchema } = require('./schemas/authSchemas');
 
@@ -48,20 +49,18 @@ if (!process.env.NODE_ENV) {
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '4h';
 
-// cookies no longer used; JWTs must be sent in Authorization header
-const COOKIE_DOMAIN = undefined; // kept for compatibility but unused
-
 // ==========================================
-// 1) APP INIT
+// 1) APP INIT & PROXY TRUST
 // ==========================================
 const app = express();
 
-// ==========================================
-// Trust Hostinger / proxy so secure cookies are set correctly
-app.set('trust proxy', 1); // still trust proxy for HTTPS enforcement
-// ==========================================
+// Trust Hostinger/proxy for secure connections
+app.set('trust proxy', 1);
 
-// Enforce HTTPS in production (behind proxy)
+// ⚠️ HTTPS REDIRECT COMMENTED OUT - May interfere with CORS preflight (OPTIONS) requests
+// Behind Hostinger proxy, HTTPS is already enforced. Enabling this can cause CORS failures.
+// Uncomment only if needed for non-proxy environments.
+/*
 if (isProd) {
   app.use((req, res, next) => {
     if (!req.secure && req.headers['x-forwarded-proto'] !== 'https') {
@@ -70,31 +69,26 @@ if (isProd) {
     next();
   });
 }
-// 2) CORS (credentials-safe)
-// ==========================================
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://croupiertraining.sgwebworks.com',
-  'https://www.croupiertraining.sgwebworks.com',
-  'https://mediumpurple-turtle-960137.hostingersite.com',
-  'https://www.mediumpurple-turtle-960137.hostingersite.com'
-];
+*/
 
 // ==========================================
-// 2) CORS (production-safe)
+// 2) CORS CONFIGURATION (PRODUCTION-SAFE)
 // ==========================================
-const FRONTEND_ORIGIN = 'https://croupiertraining.sgwebworks.com';
-
 const corsOptions = isProd
   ? {
-      origin: FRONTEND_ORIGIN, // exact origin only
-      credentials: false,      // no cookies, header auth only
+      // Production: Allow both www and non-www variants
+      origin: [
+        'https://croupiertraining.sgwebworks.com',
+        'https://www.croupiertraining.sgwebworks.com'
+      ],
+      credentials: false,      // No cookies; JWT header auth only
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+      preflightContinue: false,
+      optionsSuccessStatus: 200
     }
   : {
-      // Development: allow localhost + preview origins
+      // Development: Allow localhost + staging origins
       origin: (origin, callback) => {
         if (!origin) return callback(null, true);
         const devAllow = [
@@ -111,20 +105,27 @@ const corsOptions = isProd
       },
       credentials: false,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+      preflightContinue: false,
+      optionsSuccessStatus: 200
     };
 
 app.use(cors(corsOptions));
-// explicit OPTIONS preflight handled by cors middleware above;
-// remove app.options wildcard to avoid path-to-regexp errors
-
 
 // ==========================================
 // 3) MIDDLEWARE
 // ==========================================
-// cookieParser removed; JWT expected in Authorization header
+// JWT expected in Authorization header; no cookies
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Security Headers
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+});
 
 // Dependency Injection
 app.use((req, res, next) => {
@@ -133,26 +134,15 @@ app.use((req, res, next) => {
 });
 
 // ==========================================
-// 4) ROUTE REGISTRATION (MODULE ROUTES)
+// 4) ROUTE REGISTRATION
 // ==========================================
 app.use('/api/enroll', enrollRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 
-// simple keep-alive / health endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'awake' });
-});
-
-// COOKIE HANDLING REMOVED – JWTs are delivered via Authorization header, not cookies.
-// (helper functions and constants previously here have been deleted.)
-
 // ==========================================
-// 6) AUTH ENDPOINTS
+// 5) AUTH ENDPOINTS
 // ==========================================
-
-// admin login is now handled by /routes/admin.routes.js
-
 
 /**
  * ✅ WHO AM I
@@ -186,14 +176,13 @@ app.get('/api/me', (req, res) => {
  * POST /api/logout
  */
 app.post('/api/logout', (req, res) => {
-  // No cookies to clear; client simply removes token locally
+  // No cookies to clear; client removes token locally
   return res.status(200).json({ message: 'Logged out' });
 });
 
 // ==========================================
-// 7) SECURE FILE SERVING
+// 6) SECURE FILE SERVING
 // ==========================================
-// ✅ PRODUCTION SAFE PATH
 const uploadDir = path.join(process.cwd(), "secure_uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -219,7 +208,7 @@ app.get('/api/secure-file/:filename', (req, res) => {
 });
 
 // ==========================================
-// 8) HEALTH 
+// 7) HEALTH CHECK
 // ==========================================
 app.get('/api/health', (req, res) => {
   return res.status(200).json({
@@ -231,12 +220,12 @@ app.get('/api/health', (req, res) => {
 });
 
 // ==========================================
-// 9) START SERVER
+// 8) START SERVER
 // ==========================================
-// ✅ HOSTINGER SAFE PORT
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`\n⭐⭐⭐ SERVER RUNNING ON PORT ${PORT} [Mode: ${isProd ? 'Production' : 'Development'}] ⭐⭐⭐`);
   console.log('✅ Active Routes: /api/health, /api/me, /api/logout, /api/admin/login, /api/admin, /api/student, /api/enroll');
+  console.log(`✅ CORS Enabled for: ${isProd ? 'Production domain (www + non-www)' : 'Development origins'}`);
 });
