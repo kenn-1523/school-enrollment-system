@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:clean": "rmdir /s /q .next out 2>nul || true && next build",
     "start": "next start",
     "lint": "next lint"
   },

@@ -46,7 +46,7 @@ const handleSubmit = async (e) => {
     try {
       // 1. Send request directly to the ADMIN login route using env variable
       //    replace NEXT_PUBLIC_API_URL with your deployed backend URL if not set
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://school-enrollment-system.onrender.com'}/api/admin/login`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api-croupiertraining.sgwebworks.com'}/api/admin/login`;
       const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
